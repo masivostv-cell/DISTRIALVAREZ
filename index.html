@@ -12,20 +12,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     
-    <!-- PWA Manifest Dinámico (Generado al vuelo para mantener 1 solo archivo) -->
+    <!-- PWA Manifest Dinámico (Mejorado para mayor compatibilidad) -->
     <link rel="manifest" id="dynamic-manifest">
     <script>
         const manifestJSON = {
             "name": "Catálogo Aida Alvarez",
             "short_name": "Catálogo",
-            "start_url": "./",
+            "start_url": "./index.html",
             "display": "standalone",
             "background_color": "#f8fafc",
             "theme_color": "#2563eb",
             "icons": [{
                 "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzI1NjNlYiIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yIDEyczMtNyAxMC03IDEwIDcgMTAgNy0zIDctMTAgNy0xMC03LTEwLTd6Ii8+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMyIvPjwvc3ZnPg==",
                 "sizes": "512x512",
-                "type": "image/svg+xml"
+                "type": "image/svg+xml",
+                "purpose": "any maskable"
             }]
         };
         const manifestBlob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/json'});
@@ -41,7 +42,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="min-h-screen bg-slate-50 font-sans text-slate-800">
+<body class="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20 md:pb-0">
 
     <!-- HEADER / LOGO SECTION -->
     <header class="bg-white shadow-sm sticky top-0 z-40">
@@ -55,7 +56,7 @@
                         <div class="absolute top-0 right-0 w-3 h-3 md:w-4 md:h-4 bg-teal-400 rounded-full border-2 border-white shadow-sm"></div>
                     </div>
                     <div class="flex flex-col">
-                        <h1 class="text-xl md:text-2xl font-black tracking-tight text-slate-900 leading-none">
+                        <h1 class="text-xl md:text-2xl font-black tracking-tight text-slate-900 leading-none cursor-pointer" onclick="switchTab('catalogo')">
                             AIDA MABEL <span class="text-blue-600">ALVAREZ PRATO</span>
                         </h1>
                         <span class="text-xs md:text-sm font-bold tracking-widest text-teal-600 uppercase mt-1">
@@ -80,6 +81,12 @@
                         <i data-lucide="log-out" class="w-5 h-5"></i> Salir
                     </button>
                     
+                    <!-- Carrito -->
+                    <button onclick="switchTab('carrito')" id="tab-carrito" class="relative flex items-center gap-2 font-medium pb-2 border-b-2 border-transparent text-slate-500 hover:text-emerald-600 transition-colors">
+                        <i data-lucide="shopping-cart" class="w-5 h-5"></i> Mi Pedido
+                        <span id="cart-badge-desktop" class="absolute -top-2 -right-3 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
+                    </button>
+
                     <button onclick="openLoginModal()" id="nav-btn-admin" class="flex items-center gap-2 font-medium pb-2 text-slate-400 hover:text-blue-600">
                         <i data-lucide="lock" class="w-5 h-5"></i> Admin
                     </button>
@@ -92,6 +99,10 @@
 
                 <!-- Mobile Menu Button -->
                 <div class="md:hidden flex items-center gap-4">
+                    <button onclick="switchTab('carrito')" class="relative text-slate-500 hover:text-emerald-600 mr-2">
+                        <i data-lucide="shopping-cart" class="w-6 h-6"></i>
+                        <span id="cart-badge-mobile" class="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
+                    </button>
                     <button onclick="openLoginModal()" id="mobile-btn-admin-icon" class="text-slate-400 hover:text-blue-600">
                         <i data-lucide="lock" class="w-6 h-6"></i>
                     </button>
@@ -105,6 +116,7 @@
         <!-- Mobile Navigation -->
         <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-slate-100 px-4 pt-2 pb-4 space-y-2 shadow-lg absolute w-full z-40">
             <button onclick="switchTab('catalogo')" id="mob-tab-catalogo" class="block w-full text-left px-4 py-3 rounded-lg font-medium bg-blue-50 text-blue-600">Catálogo de Productos</button>
+            <button onclick="switchTab('carrito')" id="mob-tab-carrito" class="block w-full text-left px-4 py-3 rounded-lg font-medium text-slate-600">Mi Pedido (Carrito)</button>
             <button onclick="switchTab('politicas')" id="mob-tab-politicas" class="block w-full text-left px-4 py-3 rounded-lg font-medium text-slate-600">Políticas de Cambio</button>
             
             <div id="mobile-admin-section" class="hidden border-t border-slate-100 mt-2 pt-2">
@@ -140,6 +152,41 @@
                 <p id="login-error" class="hidden text-red-500 text-sm font-medium bg-red-50 p-2 rounded-lg border border-red-100"></p>
                 <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-colors mt-2">
                     Entrar al Panel
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL CHECKOUT (WHATSAPP FORM) -->
+    <div id="modal-checkout" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl p-6 md:p-8 w-full max-w-md shadow-2xl fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="message-circle" class="text-emerald-500 w-6 h-6"></i> Enviar Pedido
+                </h3>
+                <button onclick="closeCheckoutModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            
+            <form id="form-checkout" class="space-y-4">
+                <p class="text-sm text-slate-600 mb-4">Completa tus datos para enviar la orden directamente por WhatsApp a Aida Mabel.</p>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Tu Nombre Completo</label>
+                    <input type="text" id="checkout-name" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-50" placeholder="Ej. Juan Pérez">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Nombre de la Óptica</label>
+                    <input type="text" id="checkout-optica" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-50" placeholder="Ej. Óptica Visión Clara">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Tu Teléfono (Celular)</label>
+                    <input type="tel" id="checkout-phone" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-50" placeholder="Ej. 310 123 4567">
+                </div>
+                
+                <button type="submit" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold transition-colors flex items-center justify-center gap-2 mt-4">
+                    <i data-lucide="send" class="w-5 h-5"></i> Enviar por WhatsApp
+                </button>
+                <button type="button" onclick="closeCheckoutModal()" class="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold transition-colors mt-2">
+                    Cancelar
                 </button>
             </form>
         </div>
@@ -263,6 +310,41 @@
             </div>
         </div>
 
+        <!-- VIEW: CARRITO -->
+        <div id="view-carrito" class="hidden fade-in max-w-4xl mx-auto">
+            <div class="bg-white rounded-3xl p-6 md:p-10 shadow-sm border border-slate-100">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-6 mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="p-3 bg-emerald-50 rounded-2xl text-emerald-600">
+                            <i data-lucide="shopping-cart" class="w-7 h-7"></i>
+                        </div>
+                        <h2 class="text-3xl font-black text-slate-900">Mi Pedido</h2>
+                    </div>
+                    <span id="cart-total-items" class="bg-slate-100 text-slate-600 font-bold px-3 py-1 rounded-full text-sm">0 items</span>
+                </div>
+
+                <div id="cart-empty-state" class="text-center py-16">
+                    <i data-lucide="shopping-bag" class="w-16 h-16 text-slate-200 mx-auto mb-4"></i>
+                    <h3 class="text-xl font-bold text-slate-700 mb-2">Tu pedido está vacío</h3>
+                    <p class="text-slate-500 mb-6">Agrega productos desde el catálogo para enviar tu solicitud.</p>
+                    <button onclick="switchTab('catalogo')" class="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors">
+                        Ver Catálogo
+                    </button>
+                </div>
+
+                <div id="cart-items-container" class="hidden space-y-4 mb-8">
+                    <!-- Ítems del carrito inyectados por JS -->
+                </div>
+
+                <div id="cart-action-bar" class="hidden mt-8 pt-8 border-t border-slate-100 flex flex-col sm:flex-row gap-4 items-center justify-between">
+                    <p class="text-sm text-slate-500 text-center sm:text-left">Asegúrate de tener todo lo necesario antes de enviar la orden a WhatsApp.</p>
+                    <button onclick="openCheckoutModal()" class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-transform hover:-translate-y-1 shadow-lg shadow-emerald-200">
+                        <i data-lucide="send" class="w-5 h-5"></i> Terminar Pedido
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- VIEW: GESTIÓN (ADMIN PANEL) -->
         <div id="view-gestion" class="hidden fade-in">
             <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
@@ -342,36 +424,38 @@
 
     <!-- LÓGICA DE LA APLICACIÓN (FIREBASE + VANILLA JS + PWA) -->
     <script type="module">
-        // 0. CONFIGURACIÓN PWA (Service Worker y Prompt de Instalación en un solo script)
+        // 0. CONFIGURACIÓN PWA (Mejorada para GitHub Pages)
         let deferredPrompt;
         
-        // Creamos un Service Worker básico al vuelo para engañar al navegador y que permita la instalación
+        // Un Service Worker básico y robusto
         const swCode = `
-            self.addEventListener('install', (e) => self.skipWaiting());
+            const CACHE_NAME = 'catalogo-v1';
+            self.addEventListener('install', (e) => {
+                e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(['./'])));
+                self.skipWaiting();
+            });
             self.addEventListener('activate', (e) => self.clients.claim());
-            self.addEventListener('fetch', (e) => {});
+            self.addEventListener('fetch', (e) => {
+                e.respondWith(caches.match(e.request).then((res) => res || fetch(e.request)));
+            });
         `;
         const swBlob = new Blob([swCode], {type: 'application/javascript'});
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(err => console.log('SW fallback error', err));
         }
 
-        // Escuchar el evento del navegador que dice "Esta app se puede instalar"
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            // Mostramos los botones bonitos para instalar
             document.getElementById('nav-btn-install').classList.remove('hidden');
             document.getElementById('mob-btn-install').classList.remove('hidden');
         });
 
-        // Función que lanza el menú de instalación al darle clic al botón
         window.installApp = async () => {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
                 if (outcome === 'accepted') {
-                    // Si aceptan instalarla, ocultamos el botón
                     document.getElementById('nav-btn-install').classList.add('hidden');
                     document.getElementById('mob-btn-install').classList.add('hidden');
                 }
@@ -379,7 +463,7 @@
             }
         };
 
-        // 1. IMPORTACIONES NATIVAS DE FIREBASE (¡Eliminamos Storage!)
+        // 1. IMPORTACIONES NATIVAS DE FIREBASE
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
@@ -401,6 +485,7 @@
 
         // Variables de estado
         let products = [];
+        let cart = JSON.parse(localStorage.getItem('catalogo_cart')) || []; // Recuperamos carrito guardado
         let searchQuery = '';
         let currentBrand = 'Todas';
         let loading = true;
@@ -417,6 +502,113 @@
             { id: "19", brand: 'J&J Acuvue', name: '1-Day Acuvue Moist', category: 'Diarios', price: '$ 133.040', material: 'Etafilcon A (58% H2O)', replace: 'Diario', box: 'Caja x 30', params: 'Lacreon | CB: 8.5', image: 'https://placehold.co/400x300/fdf4ff/86198f?text=Acuvue+Moist' },
             { id: "22", brand: 'Spectrum', name: 'Xtensa Premium Asférico', category: 'Esféricos', price: '$ 74.500', material: 'Hioxifilcon A (57% H2O)', replace: 'Mensual', box: 'Caja x 6', params: 'Aquagrip | CB: 8.60', image: 'https://placehold.co/400x300/fffbeb/b45309?text=Xtensa+Asferico' }
         ];
+
+        // --- FUNCIONES DEL CARRITO ---
+        window.updateCartBadge = () => {
+            const count = cart.length;
+            const bDesktop = document.getElementById('cart-badge-desktop');
+            const bMobile = document.getElementById('cart-badge-mobile');
+            
+            if(count > 0) {
+                bDesktop.innerText = count; bDesktop.classList.remove('hidden');
+                bMobile.innerText = count; bMobile.classList.remove('hidden');
+            } else {
+                bDesktop.classList.add('hidden');
+                bMobile.classList.add('hidden');
+            }
+            document.getElementById('cart-total-items').innerText = `${count} ${count === 1 ? 'producto' : 'productos'}`;
+            localStorage.setItem('catalogo_cart', JSON.stringify(cart)); // Guardar progreso
+        };
+
+        window.addToCart = (id) => {
+            const product = products.find(p => p.id === id);
+            if(product) {
+                // Generamos un ID único para la entrada en el carrito por si pide varios iguales
+                cart.push({ ...product, cartId: Date.now().toString() });
+                window.updateCartBadge();
+                alert(`¡${product.name} agregado al pedido!`);
+            }
+        };
+
+        window.removeFromCart = (cartId) => {
+            cart = cart.filter(item => item.cartId !== cartId);
+            window.updateCartBadge();
+            renderCart();
+        };
+
+        window.renderCart = () => {
+            const container = document.getElementById('cart-items-container');
+            const emptyState = document.getElementById('cart-empty-state');
+            const actionBar = document.getElementById('cart-action-bar');
+
+            if(cart.length === 0) {
+                container.classList.add('hidden');
+                actionBar.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            container.classList.remove('hidden');
+            actionBar.classList.remove('hidden');
+
+            container.innerHTML = cart.map(item => `
+                <div class="flex items-center gap-4 p-4 border border-slate-100 rounded-2xl bg-slate-50 relative group">
+                    <img src="${item.image || 'https://placehold.co/100x100/e2e8f0/94a3b8?text=Foto'}" class="w-16 h-16 object-contain rounded-xl border border-slate-200 bg-white bg-white shrink-0">
+                    <div class="flex-1">
+                        <span class="text-xs font-bold text-blue-600">${item.brand}</span>
+                        <h4 class="font-bold text-slate-900 leading-tight">${item.name}</h4>
+                        <p class="text-sm font-bold text-slate-700">${item.price}</p>
+                    </div>
+                    <button onclick="removeFromCart('${item.cartId}')" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors" title="Eliminar del pedido">
+                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            `).join('');
+            
+            lucide.createIcons();
+        };
+
+        window.openCheckoutModal = () => document.getElementById('modal-checkout').classList.remove('hidden');
+        window.closeCheckoutModal = () => document.getElementById('modal-checkout').classList.add('hidden');
+
+        document.getElementById('form-checkout').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const nombre = document.getElementById('checkout-name').value;
+            const optica = document.getElementById('checkout-optica').value;
+            const telefono = document.getElementById('checkout-phone').value;
+            
+            if(cart.length === 0) return alert("Tu carrito está vacío.");
+
+            // Crear el mensaje para WhatsApp
+            let msj = `*NUEVO PEDIDO - CATÁLOGO AIDA*\n\n`;
+            msj += `👤 *Nombre:* ${nombre}\n`;
+            msj += `🏢 *Óptica:* ${optica}\n`;
+            msj += `📞 *Teléfono:* ${telefono}\n\n`;
+            msj += `*🛒 PRODUCTOS SOLICITADOS:*\n`;
+            
+            cart.forEach((item, i) => {
+                msj += `\n${i+1}. *${item.brand}* - ${item.name}\n`;
+                msj += `   Precio ref: ${item.price}\n`;
+                if(item.box) msj += `   Presentación: ${item.box}\n`;
+            });
+            
+            msj += `\n*Nota:* Por favor confirmar la receta y el envío con este cliente.`;
+
+            // El número que nos diste: 3164326679 (Añadimos 57 de Colombia)
+            const whatsappUrl = `https://wa.me/573164326679?text=${encodeURIComponent(msj)}`;
+            
+            // Abrir WhatsApp
+            window.open(whatsappUrl, '_blank');
+
+            // Limpiar todo después de enviar
+            cart = [];
+            window.updateCartBadge();
+            window.closeCheckoutModal();
+            document.getElementById('form-checkout').reset();
+            window.switchTab('catalogo');
+        });
+
 
         // 4. RENDERIZADO DEL CATÁLOGO
         function renderCatalog() {
@@ -450,24 +642,30 @@
             grid.classList.remove('hidden');
 
             grid.innerHTML = filtered.map(product => `
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700">${product.brand}</span>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-700">${product.category}</span>
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700">${product.brand}</span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-700">${product.category}</span>
+                        </div>
+                        <div class="w-full h-40 mb-5 rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center relative">
+                            <img src="${product.image || `https://placehold.co/400x300/f8fafc/94a3b8?text=${encodeURIComponent(product.name)}`}" 
+                                 alt="${product.name}" 
+                                 class="object-contain w-full h-full p-2 hover:scale-105 transition-transform duration-500"
+                                 onerror="this.src='https://placehold.co/400x300/f8fafc/94a3b8?text=Sin+Imagen'" />
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-1">${product.name}</h3>
+                        <p class="text-2xl font-black text-blue-600 mb-4">${product.price}</p>
+                        <div class="space-y-2 text-sm text-slate-600 mb-4">
+                            ${product.material ? `<div class="flex items-start gap-2"><i data-lucide="droplet" class="w-4 h-4 text-slate-400 mt-0.5 shrink-0"></i><span>${product.material}</span></div>` : ''}
+                            ${product.box ? `<div class="flex items-start gap-2"><i data-lucide="package" class="w-4 h-4 text-slate-400 mt-0.5 shrink-0"></i><span>${product.box} • ${product.replace || ''}</span></div>` : ''}
+                            ${product.params ? `<div class="flex items-start gap-2"><i data-lucide="info" class="w-4 h-4 text-slate-400 mt-0.5 shrink-0"></i><span class="text-xs font-medium text-slate-500 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">${product.params}</span></div>` : ''}
+                        </div>
                     </div>
-                    <div class="w-full h-40 mb-5 rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center relative">
-                        <img src="${product.image || `https://placehold.co/400x300/f8fafc/94a3b8?text=${encodeURIComponent(product.name)}`}" 
-                             alt="${product.name}" 
-                             class="object-contain w-full h-full p-2 hover:scale-105 transition-transform duration-500"
-                             onerror="this.src='https://placehold.co/400x300/f8fafc/94a3b8?text=Sin+Imagen'" />
-                    </div>
-                    <h3 class="text-lg font-bold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">${product.name}</h3>
-                    <p class="text-2xl font-black text-blue-600 mb-4">${product.price}</p>
-                    <div class="space-y-2 text-sm text-slate-600">
-                        ${product.material ? `<div class="flex items-start gap-2"><i data-lucide="droplet" class="w-4 h-4 text-slate-400 mt-0.5 shrink-0"></i><span>${product.material}</span></div>` : ''}
-                        ${product.box ? `<div class="flex items-start gap-2"><i data-lucide="package" class="w-4 h-4 text-slate-400 mt-0.5 shrink-0"></i><span>${product.box} • ${product.replace || ''}</span></div>` : ''}
-                        ${product.params ? `<div class="flex items-start gap-2"><i data-lucide="info" class="w-4 h-4 text-slate-400 mt-0.5 shrink-0"></i><span class="text-xs font-medium text-slate-500 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">${product.params}</span></div>` : ''}
-                    </div>
+                    <!-- Botón de carrito añadido al final de la tarjeta -->
+                    <button onclick="addToCart('${product.id}')" class="w-full bg-blue-50 text-blue-700 py-2.5 rounded-xl font-bold hover:bg-blue-600 hover:text-white transition-colors flex justify-center items-center gap-2 mt-auto">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i> Agregar
+                    </button>
                 </div>
             `).join('');
 
@@ -519,6 +717,9 @@
 
         // 5. LÓGICA DE FIREBASE (CACHÉ + SNAPSHOT)
         function initData() {
+            // Actualizar el número del carrito apenas abre la web
+            window.updateCartBadge();
+
             // A) Carga desde Caché
             const cachedData = localStorage.getItem('catalogo_aida_cache');
             if (cachedData) {
@@ -588,27 +789,39 @@
         
         // Pestañas
         window.switchTab = (tabName) => {
-            ['catalogo', 'politicas', 'gestion'].forEach(id => {
+            ['catalogo', 'politicas', 'gestion', 'carrito'].forEach(id => {
                 const el = document.getElementById(`view-${id}`);
-                if(id === tabName) { el.classList.remove('hidden'); } 
-                else { el.classList.add('hidden'); }
+                if(el) {
+                    if(id === tabName) el.classList.remove('hidden'); 
+                    else el.classList.add('hidden');
+                }
             });
 
-            ['catalogo', 'politicas'].forEach(id => {
-                const el = document.getElementById(`tab-${id}`);
-                el.classList.remove('border-blue-600', 'text-blue-600');
-                el.classList.add('border-transparent', 'text-slate-500');
+            // Reseteo de estilos en Desktop
+            ['tab-catalogo', 'tab-politicas', 'tab-carrito'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el){
+                    el.classList.remove('border-blue-600', 'text-blue-600', 'border-emerald-600', 'text-emerald-600');
+                    el.classList.add('border-transparent', 'text-slate-500');
+                }
             });
             const gBtn = document.getElementById('nav-btn-gestion');
-            gBtn.classList.remove('border-amber-500', 'text-amber-600');
-            gBtn.classList.add('border-transparent', 'text-slate-500');
+            if(gBtn) {
+                gBtn.classList.remove('border-amber-500', 'text-amber-600');
+                gBtn.classList.add('border-transparent', 'text-slate-500');
+            }
 
+            // Aplicar estilo activo
             if(tabName === 'catalogo') {
                 document.getElementById('tab-catalogo').classList.remove('border-transparent', 'text-slate-500');
                 document.getElementById('tab-catalogo').classList.add('border-blue-600', 'text-blue-600');
             } else if (tabName === 'politicas') {
                 document.getElementById('tab-politicas').classList.remove('border-transparent', 'text-slate-500');
                 document.getElementById('tab-politicas').classList.add('border-blue-600', 'text-blue-600');
+            } else if (tabName === 'carrito') {
+                document.getElementById('tab-carrito').classList.remove('border-transparent', 'text-slate-500');
+                document.getElementById('tab-carrito').classList.add('border-emerald-600', 'text-emerald-600');
+                window.renderCart();
             } else if (tabName === 'gestion') {
                 gBtn.classList.remove('border-transparent', 'text-slate-500');
                 gBtn.classList.add('border-amber-500', 'text-amber-600');
@@ -616,7 +829,7 @@
             }
 
             // Mobile menu styling
-            ['mob-tab-catalogo', 'mob-tab-politicas', 'mob-tab-gestion'].forEach(id => {
+            ['mob-tab-catalogo', 'mob-tab-politicas', 'mob-tab-gestion', 'mob-tab-carrito'].forEach(id => {
                 const el = document.getElementById(id);
                 if(el) {
                     el.classList.remove('bg-blue-50', 'text-blue-600', 'bg-amber-50', 'text-amber-600');
@@ -679,17 +892,14 @@
             }
 
             const { jsPDF } = window.jspdf;
-            // PDF en formato apaisado (horizontal) para que las columnas quepan bien
             const doc = new jsPDF('landscape'); 
 
-            // Título del PDF
             doc.setFontSize(18);
             doc.text("Catálogo de Productos - Aida Alvarez", 14, 22);
             doc.setFontSize(11);
             doc.setTextColor(100);
             doc.text("Distribuidora de Salud Visual", 14, 30);
 
-            // Preparar datos ordenados alfabéticamente por marca
             const sortedProducts = [...products].sort((a, b) => (a.brand || '').localeCompare(b.brand || ''));
             const headers = [["Marca", "Nombre del Producto", "Categoría", "Precio", "Material", "Presentación", "Parámetros"]];
             
@@ -703,17 +913,15 @@
                 p.params || ""
             ]);
 
-            // Generar tabla
             doc.autoTable({
                 startY: 35,
                 head: headers,
                 body: data,
                 theme: 'striped',
-                headStyles: { fillColor: [37, 99, 235] }, // Azul rey del logo
+                headStyles: { fillColor: [37, 99, 235] },
                 styles: { fontSize: 9, cellPadding: 3 },
             });
 
-            // Descargar archivo
             doc.save("Catalogo_Aida_Alvarez.pdf");
         };
 
@@ -787,7 +995,7 @@
             }
         };
 
-        // Compresión y Subida Directa a Firestore (¡Sin Storage!)
+        // Compresión y Subida Directa a Firestore
         const compressImage = (file) => {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -798,12 +1006,12 @@
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         let width = img.width, height = img.height;
-                        const MAX = 600; // Un poco más pequeño para que quepa en la base de datos
+                        const MAX = 600;
                         if (width > height && width > MAX) { height *= MAX / width; width = MAX; } 
                         else if (height > MAX) { width *= MAX / height; height = MAX; }
                         canvas.width = width; canvas.height = height;
                         canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.6)); // Mayor compresión
+                        resolve(canvas.toDataURL('image/jpeg', 0.6));
                     };
                     img.onerror = reject;
                 };
@@ -823,11 +1031,8 @@
                 btnLabel.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin text-blue-600"></i> Procesando imagen...';
                 lucide.createIcons();
                 
-                // Comprimimos la imagen a un tamaño súper ligero
                 const compressedBase64 = await compressImage(file);
                 
-                // GUARDAR DIRECTO: Usamos la imagen convertida en texto Base64
-                // Esto engaña al sistema y nos evita tener que pagar o usar Storage
                 document.getElementById('form-image').value = compressedBase64;
                 preview.innerHTML = `<img src="${compressedBase64}" class="w-full h-full object-contain" />`;
                 preview.classList.remove('hidden');
