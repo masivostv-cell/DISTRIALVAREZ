@@ -22,7 +22,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20 md:pb-0">
+<body class="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20 md:pb-0 relative">
 
     <!-- HEADER / LOGO SECTION -->
     <header class="bg-white shadow-sm sticky top-0 z-40">
@@ -70,11 +70,6 @@
                     <button onclick="openLoginModal()" id="nav-btn-admin" class="flex items-center gap-2 font-medium pb-2 text-slate-400 hover:text-blue-600">
                         <i data-lucide="lock" class="w-5 h-5"></i> Admin
                     </button>
-
-                    <!-- Botón Instalar PWA Desktop -->
-                    <button onclick="installApp()" id="nav-btn-install" class="hidden flex items-center gap-2 font-bold px-4 py-2 bg-gradient-to-r from-blue-600 to-teal-500 text-white rounded-full shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5">
-                        <i data-lucide="smartphone" class="w-4 h-4"></i> Instalar App
-                    </button>
                 </nav>
 
                 <!-- Mobile Menu Button -->
@@ -103,11 +98,6 @@
                 <button onclick="switchTab('gestion')" id="mob-tab-gestion" class="block w-full text-left px-4 py-3 rounded-lg font-medium text-slate-600">Gestión de Inventario</button>
                 <button onclick="handleLogout()" class="block w-full text-left px-4 py-3 rounded-lg font-medium text-red-500">Cerrar Sesión Admin</button>
             </div>
-
-            <!-- Botón Instalar PWA Mobile -->
-            <button onclick="installApp()" id="mob-btn-install" class="hidden w-full text-left px-4 py-3 rounded-lg font-bold bg-gradient-to-r from-blue-600 to-teal-500 text-white mt-2 flex items-center gap-2">
-                <i data-lucide="smartphone" class="w-5 h-5"></i> Instalar como App
-            </button>
         </div>
     </header>
 
@@ -402,10 +392,16 @@
         </div>
     </footer>
 
+    <!-- BOTÓN FLOTANTE PWA -->
+    <button onclick="installApp()" id="floating-install-btn" class="hidden fixed bottom-6 right-6 z-50 flex items-center gap-2 font-bold px-5 py-3 bg-gradient-to-r from-blue-600 to-teal-500 text-white rounded-full shadow-2xl hover:shadow-lg transition-all hover:-translate-y-1">
+        <i data-lucide="download" class="w-5 h-5"></i> Instalar App
+    </button>
+
     <!-- LÓGICA DE LA APLICACIÓN (FIREBASE + VANILLA JS + PWA) -->
     <script type="module">
         // 0. CONFIGURACIÓN PWA
         let deferredPrompt;
+        const floatingInstallBtn = document.getElementById('floating-install-btn');
         
         // Verifica si soporta serviceWorker y si está corriendo sobre HTTP/HTTPS para evitar errores en local
         if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
@@ -417,8 +413,15 @@
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            document.getElementById('nav-btn-install').classList.remove('hidden');
-            document.getElementById('mob-btn-install').classList.remove('hidden');
+            // Mostramos el botón flotante si la app se puede instalar
+            floatingInstallBtn.classList.remove('hidden');
+        });
+
+        // Ocultamos el botón automáticamente si detectamos que ya fue instalada (por ej. desde el navegador)
+        window.addEventListener('appinstalled', () => {
+            floatingInstallBtn.classList.add('hidden');
+            deferredPrompt = null;
+            console.log('PWA ha sido instalada');
         });
 
         window.installApp = async () => {
@@ -426,8 +429,8 @@
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
                 if (outcome === 'accepted') {
-                    document.getElementById('nav-btn-install').classList.add('hidden');
-                    document.getElementById('mob-btn-install').classList.add('hidden');
+                    // Si aceptan instalarla, ocultamos el botón flotante
+                    floatingInstallBtn.classList.add('hidden');
                 }
                 deferredPrompt = null;
             }
