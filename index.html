@@ -22,7 +22,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20 md:pb-0 relative">
+<body class="min-h-screen bg-slate-50 font-sans text-slate-800 pb-28 md:pb-10 relative">
 
     <!-- HEADER / LOGO SECTION -->
     <header class="bg-white shadow-sm sticky top-0 z-40">
@@ -397,9 +397,28 @@
         <i data-lucide="download" class="w-5 h-5"></i> Instalar App
     </button>
 
+    <!-- BARRA FLOTANTE "TERMINAR PEDIDO" -->
+    <div id="floating-checkout-bar" class="hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 w-[90%] max-w-md fade-in">
+        <button onclick="switchTab('carrito')" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-6 rounded-2xl shadow-2xl flex items-center justify-between transition-all hover:scale-105 border border-emerald-400">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/20 p-2 rounded-full">
+                    <i data-lucide="shopping-cart" class="w-6 h-6 text-white"></i>
+                </div>
+                <span class="text-lg">Terminar Pedido</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span id="floating-cart-count" class="bg-white text-emerald-600 px-3 py-1 rounded-full text-sm font-black shadow-inner">0</span>
+                <i data-lucide="chevron-right" class="w-5 h-5"></i>
+            </div>
+        </button>
+    </div>
+
     <!-- LÓGICA DE LA APLICACIÓN (FIREBASE + VANILLA JS + PWA) -->
     <script type="module">
-        // 0. CONFIGURACIÓN PWA
+        // 0. ESTADOS GLOBALES DE LA INTERFAZ
+        let currentActiveTab = 'catalogo';
+
+        // 1. CONFIGURACIÓN PWA
         let deferredPrompt;
         const floatingInstallBtn = document.getElementById('floating-install-btn');
         
@@ -436,12 +455,12 @@
             }
         };
 
-        // 1. IMPORTACIONES NATIVAS DE FIREBASE
+        // 2. IMPORTACIONES NATIVAS DE FIREBASE
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        // 2. CONFIGURACIÓN
+        // 3. CONFIGURACIÓN FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyApTK7v0-L6IEAIgR1saI_fSrYtgTpkK6Q",
             authDomain: "lentes-988d3.firebaseapp.com",
@@ -456,7 +475,7 @@
         const db = getFirestore(app);
         const firestoreAppId = firebaseConfig.projectId;
 
-        // Variables de estado
+        // Variables de estado de Data
         let products = [];
         let cart = JSON.parse(localStorage.getItem('catalogo_cart')) || []; // Recuperamos carrito guardado
         let searchQuery = '';
@@ -468,7 +487,7 @@
         // Inicializar Iconos
         lucide.createIcons();
 
-        // 3. DATOS POR DEFECTO PARA NUEVOS VISITANTES
+        // 4. DATOS POR DEFECTO PARA NUEVOS VISITANTES
         const defaultCatalogData = [
             { id: "1", brand: 'CooperVision', name: 'Biofinity', category: 'Esféricos', price: '$ 188.000', material: 'Comfilcon A (48% H2O)', replace: 'Mensual', box: 'Caja x 6', params: 'CB: 8.6 | DIAM: 14.00', image: 'https://placehold.co/400x300/eff6ff/1e3a8a?text=Biofinity' },
             { id: "13", brand: 'Alcon', name: 'Air Optix plus HydraGlyde', category: 'Esféricos', price: '$ 211.900', material: 'Lotrafilcon B (33% H2O)', replace: 'Mensual', box: 'Caja x 6', params: 'SmartShield | CB: 8.6', image: 'https://placehold.co/400x300/f0fdf4/166534?text=Air+Optix+HydraGlyde' },
@@ -476,18 +495,31 @@
             { id: "22", brand: 'Spectrum', name: 'Xtensa Premium Asférico', category: 'Esféricos', price: '$ 74.500', material: 'Hioxifilcon A (57% H2O)', replace: 'Mensual', box: 'Caja x 6', params: 'Aquagrip | CB: 8.60', image: 'https://placehold.co/400x300/fffbeb/b45309?text=Xtensa+Asferico' }
         ];
 
-        // --- FUNCIONES DEL CARRITO MEJORADO CON CANTIDADES ---
+        // --- FUNCIONES DEL CARRITO MEJORADO CON CANTIDADES Y BARRA FLOTANTE ---
         window.updateCartBadge = () => {
             const count = cart.reduce((sum, item) => sum + item.quantity, 0); 
             const bDesktop = document.getElementById('cart-badge-desktop');
             const bMobile = document.getElementById('cart-badge-mobile');
+            const floatingBar = document.getElementById('floating-checkout-bar');
+            const floatingCount = document.getElementById('floating-cart-count');
             
             if(count > 0) {
                 bDesktop.innerText = count; bDesktop.classList.remove('hidden');
                 bMobile.innerText = count; bMobile.classList.remove('hidden');
+                
+                // Actualiza contador de la barra flotante
+                floatingCount.innerText = count;
+                
+                // Solo mostrar la barra flotante si estamos en el catálogo
+                if(currentActiveTab === 'catalogo') {
+                    floatingBar.classList.remove('hidden');
+                } else {
+                    floatingBar.classList.add('hidden');
+                }
             } else {
                 bDesktop.classList.add('hidden');
                 bMobile.classList.add('hidden');
+                floatingBar.classList.add('hidden'); // Ocultar si está vacío
             }
             document.getElementById('cart-total-items').innerText = `${count} ${count === 1 ? 'producto' : 'productos'}`;
             localStorage.setItem('catalogo_cart', JSON.stringify(cart)); 
@@ -622,7 +654,7 @@
         });
 
 
-        // 4. RENDERIZADO DEL CATÁLOGO
+        // 5. RENDERIZADO DEL CATÁLOGO
         function renderCatalog() {
             const filtered = products.filter(p => {
                 const searchStr = `${p.name || ''} ${p.category || ''} ${p.brand || ''}`.toLowerCase();
@@ -739,7 +771,7 @@
             }
         }
 
-        // 5. LÓGICA DE FIREBASE (CACHÉ + SNAPSHOT)
+        // 6. LÓGICA DE FIREBASE (CACHÉ + SNAPSHOT)
         function initData() {
             window.updateCartBadge();
 
@@ -785,7 +817,7 @@
             });
         }
 
-        // 6. AUTENTICACIÓN
+        // 7. AUTENTICACIÓN
         onAuthStateChanged(auth, (user) => {
             currentUser = user;
             if (user && user.uid === '06tMFkOM5WcRPDbbYsHCtw5D5cF3') {
@@ -806,9 +838,11 @@
             renderAdminTable();
         });
 
-        // 7. EVENTOS GLOBALES (Mapeados a Window para HTML)
+        // 8. EVENTOS GLOBALES (Mapeados a Window para HTML)
         
         window.switchTab = (tabName) => {
+            currentActiveTab = tabName; // Actualizamos el estado de la tab actual
+            
             ['catalogo', 'politicas', 'gestion', 'carrito'].forEach(id => {
                 const el = document.getElementById(`view-${id}`);
                 if(el) {
@@ -859,6 +893,7 @@
             else if(tabName === 'gestion') document.getElementById('mob-tab-gestion').classList.add('bg-amber-50', 'text-amber-600');
 
             document.getElementById('mobile-menu').classList.add('hidden');
+            window.updateCartBadge(); // Actualiza la visibilidad de la barra flotante
         };
 
         window.toggleMobileMenu = () => document.getElementById('mobile-menu').classList.toggle('hidden');
