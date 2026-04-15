@@ -129,7 +129,7 @@
 
     <!-- MODAL CHECKOUT (WHATSAPP FORM) -->
     <div id="modal-checkout" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-3xl p-6 md:p-8 w-full max-w-md shadow-2xl fade-in">
+        <div class="bg-white rounded-3xl p-6 md:p-8 w-full max-w-md shadow-2xl fade-in overflow-y-auto max-h-[90vh]">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
                     <i data-lucide="message-circle" class="text-emerald-500 w-6 h-6"></i> Enviar Pedido
@@ -150,6 +150,10 @@
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Tu Teléfono (Celular)</label>
                     <input type="tel" id="checkout-phone" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-50" placeholder="Ej. 310 123 4567">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Fórmula de los lentes (Muy Importante)</label>
+                    <textarea id="checkout-formula" required rows="3" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-50" placeholder="Ej: Biofinity -> OD: -2.00 / OI: -2.50"></textarea>
                 </div>
                 
                 <button type="submit" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold transition-colors flex items-center justify-center gap-2 mt-4">
@@ -614,13 +618,15 @@
             const nombre = document.getElementById('checkout-name').value;
             const optica = document.getElementById('checkout-optica').value;
             const telefono = document.getElementById('checkout-phone').value;
+            const formula = document.getElementById('checkout-formula').value;
             
             if(cart.length === 0) return alert("Tu carrito está vacío.");
 
             // Formateo limpio y minimalista solicitado para el mensaje de WhatsApp
             let msj = `*NUEVO PEDIDO*\n\n`;
             msj += `👤 Cliente: ${nombre} (${optica})\n`;
-            msj += `📞 Tel: ${telefono}\n\n`;
+            msj += `📞 Tel: ${telefono}\n`;
+            msj += `📝 *Fórmula/Detalles:*\n${formula}\n\n`;
             msj += `*🛒 PRODUCTOS:*\n`;
 
             let granTotal = 0;
