@@ -335,7 +335,7 @@
                     <i data-lucide="phone" class="w-4 h-4 text-slate-500"></i>
                     <span>Atención a Profesionales</span>
                 </div>
-                <p>Conectado a Firebase Cloud Storage</p>
+                <p>Conectado a Firebase Firestore</p>
             </div>
         </div>
     </footer>
@@ -379,11 +379,10 @@
             }
         };
 
-        // 1. IMPORTACIONES NATIVAS DE FIREBASE
+        // 1. IMPORTACIONES NATIVAS DE FIREBASE (¡Eliminamos Storage!)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-        import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
         // 2. CONFIGURACIÓN
         const firebaseConfig = {
@@ -398,7 +397,6 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const storage = getStorage(app);
         const firestoreAppId = firebaseConfig.projectId;
 
         // Variables de estado
@@ -789,7 +787,7 @@
             }
         };
 
-        // Compresión y Subida
+        // Compresión y Subida Directa a Firestore (¡Sin Storage!)
         const compressImage = (file) => {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -800,12 +798,12 @@
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         let width = img.width, height = img.height;
-                        const MAX = 800;
+                        const MAX = 600; // Un poco más pequeño para que quepa en la base de datos
                         if (width > height && width > MAX) { height *= MAX / width; width = MAX; } 
                         else if (height > MAX) { width *= MAX / height; height = MAX; }
                         canvas.width = width; canvas.height = height;
                         canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.7));
+                        resolve(canvas.toDataURL('image/jpeg', 0.6)); // Mayor compresión
                     };
                     img.onerror = reject;
                 };
@@ -822,29 +820,22 @@
             document.getElementById('file-upload').disabled = true;
 
             try {
-                btnLabel.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin text-blue-600"></i> Comprimiendo...';
+                btnLabel.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin text-blue-600"></i> Procesando imagen...';
                 lucide.createIcons();
                 
+                // Comprimimos la imagen a un tamaño súper ligero
                 const compressedBase64 = await compressImage(file);
                 
-                btnLabel.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin text-blue-600"></i> Subiendo...';
-                lucide.createIcons();
-
-                const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, '');
-                const fileName = `productos/${Date.now()}_${cleanName}.jpg`;
-                const storageRef = ref(storage, fileName);
-                
-                await uploadString(storageRef, compressedBase64, 'data_url');
-                const url = await getDownloadURL(storageRef);
-
-                document.getElementById('form-image').value = url;
-                preview.innerHTML = `<img src="${url}" class="w-full h-full object-contain" />`;
+                // GUARDAR DIRECTO: Usamos la imagen convertida en texto Base64
+                // Esto engaña al sistema y nos evita tener que pagar o usar Storage
+                document.getElementById('form-image').value = compressedBase64;
+                preview.innerHTML = `<img src="${compressedBase64}" class="w-full h-full object-contain" />`;
                 preview.classList.remove('hidden');
 
-                btnLabel.innerHTML = '<i data-lucide="upload-cloud" class="w-5 h-5 text-blue-600"></i> Imagen Subida';
+                btnLabel.innerHTML = '<i data-lucide="check-circle" class="w-5 h-5 text-emerald-600"></i> Imagen Lista';
                 lucide.createIcons();
             } catch (err) {
-                alert("Error al subir imagen: " + err.message);
+                alert("Error al procesar imagen: " + err.message);
                 btnLabel.innerHTML = '<i data-lucide="upload-cloud" class="w-5 h-5 text-blue-600"></i> Reintentar subida';
                 lucide.createIcons();
             } finally {
