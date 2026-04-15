@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo Aida Alvarez</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- jsPDF y AutoTable (PDF Export) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- PWA Manifest Dinámico (Generado al vuelo para mantener 1 solo archivo) -->
+    <link rel="manifest" id="dynamic-manifest">
+    <script>
+        const manifestJSON = {
+            "name": "Catálogo Aida Alvarez",
+            "short_name": "Catálogo",
+            "start_url": "./",
+            "display": "standalone",
+            "background_color": "#f8fafc",
+            "theme_color": "#2563eb",
+            "icons": [{
+                "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzI1NjNlYiIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yIDEyczMtNyAxMC03IDEwIDcgMTAgNy0zIDctMTAgNy0xMC03LTEwLTd6Ii8+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMyIvPjwvc3ZnPg==",
+                "sizes": "512x512",
+                "type": "image/svg+xml"
+            }]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/json'});
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('dynamic-manifest').href = URL.createObjectURL(manifestBlob);
+        });
+    </script>
+
+    <style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 font-sans text-slate-800">
+
+    <!-- HEADER / LOGO SECTION -->
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                
+                <!-- LOGO -->
+                <div class="flex items-center gap-4">
+                    <div class="relative flex items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-blue-700 to-blue-500 rounded-full shadow-lg">
+                        <i data-lucide="eye" class="w-7 h-7 md:w-8 md:h-8 text-white"></i>
+                        <div class="absolute top-0 right-0 w-3 h-3 md:w-4 md:h-4 bg-teal-400 rounded-full border-2 border-white shadow-sm"></div>
+                    </div>
+                    <div class="flex flex-col">
+                        <h1 class="text-xl md:text-2xl font-black tracking-tight text-slate-900 leading-none">
+                            AIDA MABEL <span class="text-blue-600">ALVAREZ PRATO</span>
+                        </h1>
+                        <span class="text-xs md:text-sm font-bold tracking-widest text-teal-600 uppercase mt-1">
+                            Distribuidora de Salud Visual
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <nav class="hidden md:flex space-x-8 items-center">
+                    <button onclick="switchTab('catalogo')" id="tab-catalogo" class="flex items-center gap-2 font-medium pb-2 border-b-2 border-blue-600 text-blue-600 transition-colors">
+                        <i data-lucide="book-open" class="w-5 h-5"></i> Catálogo
+                    </button>
+                    <button onclick="switchTab('politicas')" id="tab-politicas" class="flex items-center gap-2 font-medium pb-2 border-b-2 border-transparent text-slate-500 hover:text-blue-600 transition-colors">
+                        <i data-lucide="shield-check" class="w-5 h-5"></i> Políticas
+                    </button>
+                    
+                    <button onclick="switchTab('gestion')" id="nav-btn-gestion" class="hidden flex items-center gap-2 font-medium pb-2 border-b-2 border-transparent text-slate-500 hover:text-amber-600 transition-colors">
+                        <i data-lucide="package" class="w-5 h-5"></i> Gestión
+                    </button>
+                    <button onclick="handleLogout()" id="nav-btn-logout" class="hidden flex items-center gap-2 font-medium pb-2 text-red-500 hover:text-red-700">
+                        <i data-lucide="log-out" class="w-5 h-5"></i> Salir
+                    </button>
+                    
+                    <button onclick="openLoginModal()" id="nav-btn-admin" class="flex items-center gap-2 font-medium pb-2 text-slate-400 hover:text-blue-600">
+                        <i data-lucide="lock" class="w-5 h-5"></i> Admin
+                    </button>
+
+                    <!-- Botón Instalar PWA Desktop -->
+                    <button onclick="installApp()" id="nav-btn-install" class="hidden flex items-center gap-2 font-bold px-4 py-2 bg-gradient-to-r from-blue-600 to-teal-500 text-white rounded-full shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5">
+                        <i data-lucide="smartphone" class="w-4 h-4"></i> Instalar App
+                    </button>
+                </nav>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden flex items-center gap-4">
+                    <button onclick="openLoginModal()" id="mobile-btn-admin-icon" class="text-slate-400 hover:text-blue-600">
+                        <i data-lucide="lock" class="w-6 h-6"></i>
+                    </button>
+                    <button onclick="toggleMobileMenu()" class="text-slate-500 hover:text-blue-600">
+                        <i data-lucide="menu" class="w-7 h-7"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-slate-100 px-4 pt-2 pb-4 space-y-2 shadow-lg absolute w-full z-40">
+            <button onclick="switchTab('catalogo')" id="mob-tab-catalogo" class="block w-full text-left px-4 py-3 rounded-lg font-medium bg-blue-50 text-blue-600">Catálogo de Productos</button>
+            <button onclick="switchTab('politicas')" id="mob-tab-politicas" class="block w-full text-left px-4 py-3 rounded-lg font-medium text-slate-600">Políticas de Cambio</button>
+            
+            <div id="mobile-admin-section" class="hidden border-t border-slate-100 mt-2 pt-2">
+                <button onclick="switchTab('gestion')" id="mob-tab-gestion" class="block w-full text-left px-4 py-3 rounded-lg font-medium text-slate-600">Gestión de Inventario</button>
+                <button onclick="handleLogout()" class="block w-full text-left px-4 py-3 rounded-lg font-medium text-red-500">Cerrar Sesión Admin</button>
+            </div>
+
+            <!-- Botón Instalar PWA Mobile -->
+            <button onclick="installApp()" id="mob-btn-install" class="hidden w-full text-left px-4 py-3 rounded-lg font-bold bg-gradient-to-r from-blue-600 to-teal-500 text-white mt-2 flex items-center gap-2">
+                <i data-lucide="smartphone" class="w-5 h-5"></i> Instalar como App
+            </button>
+        </div>
+    </header>
+
+    <!-- MODAL DE LOGIN -->
+    <div id="modal-login" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="lock" class="text-blue-600 w-6 h-6"></i> Acceso Admin
+                </h3>
+                <button onclick="closeLoginModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <form id="form-login" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Correo Electrónico</label>
+                    <input type="email" id="login-email" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50" placeholder="tu_correo@ejemplo.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Contraseña</label>
+                    <input type="password" id="login-password" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50" placeholder="••••••••">
+                </div>
+                <p id="login-error" class="hidden text-red-500 text-sm font-medium bg-red-50 p-2 rounded-lg border border-red-100"></p>
+                <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-colors mt-2">
+                    Entrar al Panel
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DEL FORMULARIO DE PRODUCTOS (ADMIN) -->
+    <div id="modal-form" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl p-6 md:p-8 w-full max-w-2xl shadow-2xl my-8 fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="form-title" class="text-2xl font-bold text-slate-900">Nuevo Producto</h3>
+                <button onclick="closeFormModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            
+            <form id="admin-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="hidden" id="form-id">
+                <div class="space-y-1">
+                    <label class="text-sm font-medium text-slate-700">Nombre del Producto</label>
+                    <input type="text" id="form-name" required class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-sm font-medium text-slate-700">Marca</label>
+                    <input type="text" id="form-brand" required class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-sm font-medium text-slate-700">Categoría</label>
+                    <input type="text" id="form-category" required class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-sm font-medium text-slate-700">Precio (ej. $ 150.000)</label>
+                    <input type="text" id="form-price" required class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-sm font-medium text-slate-700">Material y % H2O</label>
+                    <input type="text" id="form-material" class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-sm font-medium text-slate-700">Reemplazo (ej. Mensual)</label>
+                    <input type="text" id="form-replace" class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-sm font-medium text-slate-700">Presentación (ej. Caja x 6)</label>
+                    <input type="text" id="form-box" class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-sm font-medium text-slate-700">Parámetros Adicionales</label>
+                    <input type="text" id="form-params" class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+                </div>
+                <div class="space-y-1 md:col-span-2">
+                    <label class="text-sm font-medium text-slate-700">Imagen del Producto</label>
+                    <div class="flex gap-4 items-center">
+                        <div class="flex-1">
+                            <input type="url" id="form-image" placeholder="Pega una URL o sube una imagen" class="w-full px-3 py-2 border border-slate-200 rounded-lg mb-2">
+                            <div class="relative">
+                                <input type="file" id="file-upload" accept="image/*" onchange="handleImageUpload(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                <button type="button" id="upload-btn-label" class="w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-slate-300 rounded-lg hover:bg-slate-50 transition-colors text-slate-600 font-medium pointer-events-none">
+                                    <i data-lucide="upload-cloud" class="w-5 h-5 text-blue-600"></i> Subir imagen (Auto-compresión)
+                                </button>
+                            </div>
+                        </div>
+                        <div id="image-preview-container" class="hidden w-20 h-20 rounded-lg border border-slate-200 overflow-hidden shrink-0 bg-slate-50"></div>
+                    </div>
+                </div>
+                <div class="md:col-span-2 flex justify-end gap-3 mt-4 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeFormModal()" class="px-5 py-2.5 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl font-medium">Cancelar</button>
+                    <button type="submit" class="px-5 py-2.5 text-white bg-blue-600 hover:bg-blue-700 flex items-center gap-2 rounded-xl font-medium">
+                        <i data-lucide="save" class="w-4 h-4"></i> Guardar Producto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- VIEW: CATÁLOGO -->
+        <div id="view-catalogo" class="fade-in">
+            <!-- Aviso de errores de Firebase -->
+            <div id="auth-error-container" class="hidden mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-4 rounded-2xl items-start gap-3 shadow-sm">
+                <i data-lucide="info" class="w-6 h-6 mt-0.5 shrink-0 text-red-600"></i>
+                <div class="flex-1">
+                    <h4 class="font-bold text-lg mb-1">Aviso de Base de Datos</h4>
+                    <p id="auth-error-message" class="text-sm font-medium mb-3"></p>
+                </div>
+            </div>
+
+            <!-- Search & Filters -->
+            <div class="mb-8 flex flex-col xl:flex-row xl:items-center xl:justify-between bg-white p-4 rounded-2xl shadow-sm border border-slate-100 gap-4">
+                <div class="relative flex-1 max-w-md">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="search" class="h-5 w-5 text-slate-400"></i>
+                    </div>
+                    <input type="text" id="search-input" class="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all" placeholder="Buscar lente, marca o categoría...">
+                </div>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full xl:w-auto overflow-hidden">
+                    <div class="flex items-center gap-3 w-full sm:w-auto overflow-x-auto hide-scrollbar">
+                        <i data-lucide="filter" class="w-5 h-5 text-slate-400 hidden sm:block shrink-0"></i>
+                        <div id="filter-brands" class="flex gap-2">
+                            <!-- Botones de marcas renderizados por JS -->
+                        </div>
+                    </div>
+                    <button onclick="exportToPDF()" class="bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shrink-0 w-full sm:w-auto">
+                        <i data-lucide="download" class="w-5 h-5"></i> Descargar PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading & Empty States -->
+            <div id="loading-spinner" class="flex justify-center items-center py-20">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+            
+            <div id="empty-state" class="hidden text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
+                <i data-lucide="info" class="w-12 h-12 text-slate-300 mx-auto mb-3"></i>
+                <p class="text-lg text-slate-500 font-medium">No se encontraron productos.</p>
+            </div>
+
+            <!-- Product Grid -->
+            <div id="product-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Productos inyectados por JS -->
+            </div>
+        </div>
+
+        <!-- VIEW: GESTIÓN (ADMIN PANEL) -->
+        <div id="view-gestion" class="hidden fade-in">
+            <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                    <div>
+                        <h2 class="text-2xl font-black text-slate-900">Gestión de Inventario</h2>
+                        <p class="text-slate-500 mt-1">Sincronizado en tiempo real con Firebase en la nube.</p>
+                    </div>
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <button onclick="openFormModal()" class="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors flex-1 sm:flex-none">
+                            <i data-lucide="plus" class="w-5 h-5"></i> Agregar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto rounded-2xl border border-slate-100">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <thead class="bg-slate-50 text-slate-700 uppercase font-semibold">
+                            <tr>
+                                <th class="px-4 py-3">Foto</th>
+                                <th class="px-4 py-3">Producto</th>
+                                <th class="px-4 py-3">Marca / Categoría</th>
+                                <th class="px-4 py-3">Precio</th>
+                                <th class="px-4 py-3 text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-table-body" class="divide-y divide-slate-100">
+                            <!-- Tabla inyectada por JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: POLÍTICAS -->
+        <div id="view-politicas" class="hidden fade-in max-w-4xl mx-auto">
+            <div class="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-slate-100">
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="p-3 bg-blue-50 rounded-2xl">
+                        <i data-lucide="shield-check" class="w-8 h-8 text-blue-600"></i>
+                    </div>
+                    <h2 class="text-3xl font-black text-slate-900">Políticas de Cambio</h2>
+                </div>
+                
+                <div class="space-y-6 text-slate-700">
+                    <p class="text-lg font-medium text-slate-600">Agradecemos tener en cuenta estas políticas al momento de realizar la venta y/o adaptación de lentes de contacto.</p>
+                    <ul class="space-y-4">
+                        <li class="flex gap-3"><span class="text-blue-500 mt-1">•</span><span>El plazo máximo para cambio es de <strong>treinta (30) días</strong> a partir de la fecha de la factura.</span></li>
+                        <li class="flex gap-3"><span class="text-blue-500 mt-1">•</span><span>La caja debe estar en <strong>perfecto estado, empaque original y sellada</strong>, con fecha de vencimiento mínimo posterior a 12 meses.</span></li>
+                        <li class="flex gap-3"><span class="text-blue-500 mt-1">•</span><span>El producto de cambio debe llevar una carta realizada por el profesional, indicando motivo, número de factura y nueva fórmula.</span></li>
+                        <li class="flex gap-3"><span class="text-blue-500 mt-1">•</span><span>No hay modificación de fórmula sobre las cajas que ya tienen un previo cambio. Los lentes sobre pedido especial y/o extra-rango <strong>no tienen cambio, ni devolución de dinero</strong>.</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 text-slate-400 py-12 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center md:text-left md:flex justify-between items-center">
+            <div class="mb-6 md:mb-0">
+                <div class="flex items-center justify-center md:justify-start gap-3 mb-4">
+                    <i data-lucide="eye" class="w-6 h-6 text-blue-500"></i>
+                    <h2 class="text-xl font-black text-white tracking-tight uppercase">Aida Mabel <span class="text-blue-500">Alvarez Prato</span></h2>
+                </div>
+                <p class="text-sm">Catálogo de Productos y Soluciones Visuales 2026</p>
+            </div>
+            <div class="space-y-2 text-sm">
+                <div class="flex items-center justify-center md:justify-end gap-2">
+                    <i data-lucide="phone" class="w-4 h-4 text-slate-500"></i>
+                    <span>Atención a Profesionales</span>
+                </div>
+                <p>Conectado a Firebase Cloud Storage</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- LÓGICA DE LA APLICACIÓN (FIREBASE + VANILLA JS + PWA) -->
+    <script type="module">
+        // 0. CONFIGURACIÓN PWA (Service Worker y Prompt de Instalación en un solo script)
+        let deferredPrompt;
+        
+        // Creamos un Service Worker básico al vuelo para engañar al navegador y que permita la instalación
+        const swCode = `
+            self.addEventListener('install', (e) => self.skipWaiting());
+            self.addEventListener('activate', (e) => self.clients.claim());
+            self.addEventListener('fetch', (e) => {});
+        `;
+        const swBlob = new Blob([swCode], {type: 'application/javascript'});
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(err => console.log('SW fallback error', err));
+        }
+
+        // Escuchar el evento del navegador que dice "Esta app se puede instalar"
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Mostramos los botones bonitos para instalar
+            document.getElementById('nav-btn-install').classList.remove('hidden');
+            document.getElementById('mob-btn-install').classList.remove('hidden');
+        });
+
+        // Función que lanza el menú de instalación al darle clic al botón
+        window.installApp = async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    // Si aceptan instalarla, ocultamos el botón
+                    document.getElementById('nav-btn-install').classList.add('hidden');
+                    document.getElementById('mob-btn-install').classList.add('hidden');
+                }
+                deferredPrompt = null;
+            }
+        };
+
+        // 1. IMPORTACIONES NATIVAS DE FIREBASE
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+
+        // 2. CONFIGURACIÓN
+        const firebaseConfig = {
+            apiKey: "AIzaSyApTK7v0-L6IEAIgR1saI_fSrYtgTpkK6Q",
+            authDomain: "lentes-988d3.firebaseapp.com",
+            projectId: "lentes-988d3",
+            storageBucket: "lentes-988d3.firebasestorage.app",
+            messagingSenderId: "978643928499",
+            appId: "1:978643928499:web:e67f11cd836a19cd7977c6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+        const firestoreAppId = firebaseConfig.projectId;
+
+        // Variables de estado
+        let products = [];
+        let searchQuery = '';
+        let currentBrand = 'Todas';
+        let loading = true;
+        let currentUser = null;
+        let isAdmin = false;
+
+        // Inicializar Iconos
+        lucide.createIcons();
+
+        // 3. DATOS POR DEFECTO PARA NUEVOS VISITANTES
+        const defaultCatalogData = [
+            { id: "1", brand: 'CooperVision', name: 'Biofinity', category: 'Esféricos', price: '$ 188.000', material: 'Comfilcon A (48% H2O)', replace: 'Mensual', box: 'Caja x 6', params: 'CB: 8.6 | DIAM: 14.00', image: 'https://placehold.co/400x300/eff6ff/1e3a8a?text=Biofinity' },
+            { id: "13", brand: 'Alcon', name: 'Air Optix plus HydraGlyde', category: 'Esféricos', price: '$ 211.900', material: 'Lotrafilcon B (33% H2O)', replace: 'Mensual', box: 'Caja x 6', params: 'SmartShield | CB: 8.6', image: 'https://placehold.co/400x300/f0fdf4/166534?text=Air+Optix+HydraGlyde' },
+            { id: "19", brand: 'J&J Acuvue', name: '1-Day Acuvue Moist', category: 'Diarios', price: '$ 133.040', material: 'Etafilcon A (58% H2O)', replace: 'Diario', box: 'Caja x 30', params: 'Lacreon | CB: 8.5', image: 'https://placehold.co/400x300/fdf4ff/86198f?text=Acuvue+Moist' },
+            { id: "22", brand: 'Spectrum', name: 'Xtensa Premium Asférico', category: 'Esféricos', price: '$ 74.500', material: 'Hioxifilcon A (57% H2O)', replace: 'Mensual', box: 'Caja x 6', params: 'Aquagrip | CB: 8.60', image: 'https://placehold.co/400x300/fffbeb/b45309?text=Xtensa+Asferico' }
+        ];
+
+        // 4. RENDERIZADO DEL CATÁLOGO
+        function renderCatalog() {
+            const filtered = products.filter(p => {
+                const searchStr = `${p.name || ''} ${p.category || ''} ${p.brand || ''}`.toLowerCase();
+                const matchesSearch = searchStr.includes(searchQuery.toLowerCase());
+                const matchesBrand = currentBrand === 'Todas' || p.brand === currentBrand;
+                return matchesSearch && matchesBrand;
+            });
+
+            const grid = document.getElementById('product-grid');
+            const loadingEl = document.getElementById('loading-spinner');
+            const emptyEl = document.getElementById('empty-state');
+
+            if (loading) {
+                loadingEl.classList.remove('hidden');
+                emptyEl.classList.add('hidden');
+                grid.classList.add('hidden');
+                return;
+            }
+
+            if (filtered.length === 0) {
+                loadingEl.classList.add('hidden');
+                emptyEl.classList.remove('hidden');
+                grid.classList.add('hidden');
+                return;
+            }
+
+            loadingEl.classList.add('hidden');
+            emptyEl.classList.add('hidden');
+            grid.classList.remove('hidden');
+
+            grid.innerHTML = filtered.map(product => `
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700">${product.brand}</span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-700">${product.category}</span>
+                    </div>
+                    <div class="w-full h-40 mb-5 rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center relative">
+                        <img src="${product.image || `https://placehold.co/400x300/f8fafc/94a3b8?text=${encodeURIComponent(product.name)}`}" 
+                             alt="${product.name}" 
+                             class="object-contain w-full h-full p-2 hover:scale-105 transition-transform duration-500"
+                             onerror="this.src='https://placehold.co/400x300/f8fafc/94a3b8?text=Sin+Imagen'" />
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">${product.name}</h3>
+                    <p class="text-2xl font-black text-blue-600 mb-4">${product.price}</p>
+                    <div class="space-y-2 text-sm text-slate-600">
+                        ${product.material ? `<div class="flex items-start gap-2"><i data-lucide="droplet" class="w-4 h-4 text-slate-400 mt-0.5 shrink-0"></i><span>${product.material}</span></div>` : ''}
+                        ${product.box ? `<div class="flex items-start gap-2"><i data-lucide="package" class="w-4 h-4 text-slate-400 mt-0.5 shrink-0"></i><span>${product.box} • ${product.replace || ''}</span></div>` : ''}
+                        ${product.params ? `<div class="flex items-start gap-2"><i data-lucide="info" class="w-4 h-4 text-slate-400 mt-0.5 shrink-0"></i><span class="text-xs font-medium text-slate-500 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">${product.params}</span></div>` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+            renderFilters();
+        }
+
+        // Render Filtros de Marca
+        function renderFilters() {
+            const brands = ['Todas', ...new Set(products.map(item => item.brand))];
+            const container = document.getElementById('filter-brands');
+            container.innerHTML = brands.map(brand => `
+                <button onclick="setBrandFilter('${brand}')" class="whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition-all ${currentBrand === brand ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+                    ${brand}
+                </button>
+            `).join('');
+        }
+
+        // Render Tabla Admin
+        function renderAdminTable() {
+            const tbody = document.getElementById('admin-table-body');
+            if (!isAdmin) return;
+
+            if (products.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-500">No hay productos guardados.</td></tr>`;
+            } else {
+                tbody.innerHTML = products.map(product => `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-4 py-3">
+                            <img src="${product.image || 'https://placehold.co/50x50/f8fafc/94a3b8?text=X'}" class="w-12 h-12 object-contain rounded-lg border border-slate-200 bg-white" onerror="this.src='https://placehold.co/50x50/f8fafc/94a3b8?text=X'" />
+                        </td>
+                        <td class="px-4 py-3 font-medium text-slate-900">${product.name}</td>
+                        <td class="px-4 py-3">
+                            <span class="block text-blue-600">${product.brand}</span>
+                            <span class="text-xs text-slate-400">${product.category}</span>
+                        </td>
+                        <td class="px-4 py-3 font-bold">${product.price}</td>
+                        <td class="px-4 py-3 text-right">
+                            <div class="flex justify-end gap-2">
+                                <button onclick="openFormModal('${product.id}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Editar"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                                <button onclick="deleteProduct('${product.id}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Eliminar"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+                lucide.createIcons();
+            }
+        }
+
+        // 5. LÓGICA DE FIREBASE (CACHÉ + SNAPSHOT)
+        function initData() {
+            // A) Carga desde Caché
+            const cachedData = localStorage.getItem('catalogo_aida_cache');
+            if (cachedData) {
+                try {
+                    products = JSON.parse(cachedData);
+                    loading = false;
+                    renderCatalog();
+                    renderAdminTable();
+                } catch (e) { console.error("Error leyendo caché:", e); }
+            }
+
+            // B) Sincronización Real con Firebase
+            const productsRef = collection(db, 'artifacts', firestoreAppId, 'public', 'data', 'products');
+            onSnapshot(productsRef, (snapshot) => {
+                if (snapshot.empty && !window.__hasSeeded) {
+                    if (currentUser) {
+                        window.__hasSeeded = true;
+                        Promise.all(defaultCatalogData.map(p => setDoc(doc(productsRef, p.id), p)))
+                            .then(() => console.log("Sembrado inicial exitoso"));
+                    } else if (!cachedData) {
+                        products = defaultCatalogData;
+                        loading = false;
+                        renderCatalog();
+                    }
+                } else {
+                    const loadedProducts = [];
+                    snapshot.forEach(d => loadedProducts.push({ id: d.id, ...d.data() }));
+                    products = loadedProducts;
+                    localStorage.setItem('catalogo_aida_cache', JSON.stringify(loadedProducts));
+                    loading = false;
+                    renderCatalog();
+                    renderAdminTable();
+                }
+            }, (error) => {
+                if(error.message && error.message.includes('permission')) {
+                    document.getElementById('auth-error-message').innerText = "Recuerda abrir las reglas de Firestore (Rules) para permitir acceso a los clientes.";
+                    document.getElementById('auth-error-container').classList.remove('hidden');
+                    document.getElementById('auth-error-container').classList.add('flex');
+                    if (!cachedData) { products = defaultCatalogData; renderCatalog(); }
+                }
+                loading = false;
+            });
+        }
+
+        // 6. AUTENTICACIÓN
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            if (user && user.uid === '06tMFkOM5WcRPDbbYsHCtw5D5cF3') {
+                isAdmin = true;
+                document.getElementById('nav-btn-admin').classList.add('hidden');
+                document.getElementById('mobile-btn-admin-icon').classList.add('hidden');
+                document.getElementById('nav-btn-gestion').classList.remove('hidden');
+                document.getElementById('nav-btn-logout').classList.remove('hidden');
+                document.getElementById('mobile-admin-section').classList.remove('hidden');
+            } else {
+                isAdmin = false;
+                document.getElementById('nav-btn-admin').classList.remove('hidden');
+                document.getElementById('mobile-btn-admin-icon').classList.remove('hidden');
+                document.getElementById('nav-btn-gestion').classList.add('hidden');
+                document.getElementById('nav-btn-logout').classList.add('hidden');
+                document.getElementById('mobile-admin-section').classList.add('hidden');
+            }
+            renderAdminTable();
+        });
+
+        // 7. EVENTOS GLOBALES (Mapeados a Window para HTML)
+        
+        // Pestañas
+        window.switchTab = (tabName) => {
+            ['catalogo', 'politicas', 'gestion'].forEach(id => {
+                const el = document.getElementById(`view-${id}`);
+                if(id === tabName) { el.classList.remove('hidden'); } 
+                else { el.classList.add('hidden'); }
+            });
+
+            ['catalogo', 'politicas'].forEach(id => {
+                const el = document.getElementById(`tab-${id}`);
+                el.classList.remove('border-blue-600', 'text-blue-600');
+                el.classList.add('border-transparent', 'text-slate-500');
+            });
+            const gBtn = document.getElementById('nav-btn-gestion');
+            gBtn.classList.remove('border-amber-500', 'text-amber-600');
+            gBtn.classList.add('border-transparent', 'text-slate-500');
+
+            if(tabName === 'catalogo') {
+                document.getElementById('tab-catalogo').classList.remove('border-transparent', 'text-slate-500');
+                document.getElementById('tab-catalogo').classList.add('border-blue-600', 'text-blue-600');
+            } else if (tabName === 'politicas') {
+                document.getElementById('tab-politicas').classList.remove('border-transparent', 'text-slate-500');
+                document.getElementById('tab-politicas').classList.add('border-blue-600', 'text-blue-600');
+            } else if (tabName === 'gestion') {
+                gBtn.classList.remove('border-transparent', 'text-slate-500');
+                gBtn.classList.add('border-amber-500', 'text-amber-600');
+                renderAdminTable();
+            }
+
+            // Mobile menu styling
+            ['mob-tab-catalogo', 'mob-tab-politicas', 'mob-tab-gestion'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) {
+                    el.classList.remove('bg-blue-50', 'text-blue-600', 'bg-amber-50', 'text-amber-600');
+                    el.classList.add('text-slate-600');
+                }
+            });
+            
+            if(tabName === 'catalogo') document.getElementById('mob-tab-catalogo').classList.add('bg-blue-50', 'text-blue-600');
+            else if(tabName === 'politicas') document.getElementById('mob-tab-politicas').classList.add('bg-blue-50', 'text-blue-600');
+            else if(tabName === 'gestion') document.getElementById('mob-tab-gestion').classList.add('bg-amber-50', 'text-amber-600');
+
+            document.getElementById('mobile-menu').classList.add('hidden');
+        };
+
+        window.toggleMobileMenu = () => document.getElementById('mobile-menu').classList.toggle('hidden');
+        window.openLoginModal = () => document.getElementById('modal-login').classList.remove('hidden');
+        window.closeLoginModal = () => document.getElementById('modal-login').classList.add('hidden');
+        
+        // Filtros
+        window.setBrandFilter = (brand) => {
+            currentBrand = brand;
+            renderCatalog();
+        };
+
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            renderCatalog();
+        });
+
+        // Login
+        document.getElementById('form-login').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-password').value;
+            const errEl = document.getElementById('login-error');
+            errEl.classList.add('hidden');
+
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                window.closeLoginModal();
+                document.getElementById('form-login').reset();
+                window.switchTab('gestion');
+            } catch (error) {
+                errEl.innerText = error.code.includes('invalid') || error.code.includes('user') || error.code.includes('password') 
+                    ? 'Correo o contraseña incorrectos.' : 'Error: ' + error.message;
+                errEl.classList.remove('hidden');
+            }
+        });
+
+        window.handleLogout = async () => {
+            await signOut(auth);
+            window.switchTab('catalogo');
+        };
+
+        // Exportar a PDF (Público)
+        window.exportToPDF = () => {
+            if (products.length === 0) {
+                alert("No hay productos para exportar.");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            // PDF en formato apaisado (horizontal) para que las columnas quepan bien
+            const doc = new jsPDF('landscape'); 
+
+            // Título del PDF
+            doc.setFontSize(18);
+            doc.text("Catálogo de Productos - Aida Alvarez", 14, 22);
+            doc.setFontSize(11);
+            doc.setTextColor(100);
+            doc.text("Distribuidora de Salud Visual", 14, 30);
+
+            // Preparar datos ordenados alfabéticamente por marca
+            const sortedProducts = [...products].sort((a, b) => (a.brand || '').localeCompare(b.brand || ''));
+            const headers = [["Marca", "Nombre del Producto", "Categoría", "Precio", "Material", "Presentación", "Parámetros"]];
+            
+            const data = sortedProducts.map(p => [
+                p.brand || "",
+                p.name || "",
+                p.category || "",
+                p.price || "",
+                p.material || "",
+                (p.box || "") + (p.replace ? ` • ${p.replace}` : ""),
+                p.params || ""
+            ]);
+
+            // Generar tabla
+            doc.autoTable({
+                startY: 35,
+                head: headers,
+                body: data,
+                theme: 'striped',
+                headStyles: { fillColor: [37, 99, 235] }, // Azul rey del logo
+                styles: { fontSize: 9, cellPadding: 3 },
+            });
+
+            // Descargar archivo
+            doc.save("Catalogo_Aida_Alvarez.pdf");
+        };
+
+        // Panel Admin
+        window.openFormModal = (id = null) => {
+            document.getElementById('admin-form').reset();
+            const preview = document.getElementById('image-preview-container');
+            preview.classList.add('hidden');
+            preview.innerHTML = '';
+            
+            if (id) {
+                document.getElementById('form-title').innerText = 'Editar Producto';
+                const p = products.find(prod => prod.id === id);
+                if (p) {
+                    document.getElementById('form-id').value = p.id;
+                    document.getElementById('form-name').value = p.name || '';
+                    document.getElementById('form-brand').value = p.brand || '';
+                    document.getElementById('form-category').value = p.category || '';
+                    document.getElementById('form-price').value = p.price || '';
+                    document.getElementById('form-material').value = p.material || '';
+                    document.getElementById('form-replace').value = p.replace || '';
+                    document.getElementById('form-box').value = p.box || '';
+                    document.getElementById('form-params').value = p.params || '';
+                    document.getElementById('form-image').value = p.image || '';
+                    
+                    if(p.image) {
+                        preview.innerHTML = `<img src="${p.image}" class="w-full h-full object-contain" />`;
+                        preview.classList.remove('hidden');
+                    }
+                }
+            } else {
+                document.getElementById('form-title').innerText = 'Nuevo Producto';
+                document.getElementById('form-id').value = '';
+            }
+            document.getElementById('modal-form').classList.remove('hidden');
+        };
+
+        window.closeFormModal = () => document.getElementById('modal-form').classList.add('hidden');
+
+        document.getElementById('admin-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if(!isAdmin) return;
+
+            const id = document.getElementById('form-id').value || Date.now().toString();
+            const product = {
+                id: id,
+                name: document.getElementById('form-name').value,
+                brand: document.getElementById('form-brand').value,
+                category: document.getElementById('form-category').value,
+                price: document.getElementById('form-price').value,
+                material: document.getElementById('form-material').value,
+                replace: document.getElementById('form-replace').value,
+                box: document.getElementById('form-box').value,
+                params: document.getElementById('form-params').value,
+                image: document.getElementById('form-image').value
+            };
+
+            try {
+                const docRef = doc(db, 'artifacts', firestoreAppId, 'public', 'data', 'products', id);
+                await setDoc(docRef, product);
+                window.closeFormModal();
+            } catch (err) { alert("No se pudo guardar: " + err.message); }
+        });
+
+        window.deleteProduct = async (id) => {
+            if(!isAdmin) return;
+            if(confirm('¿Estás segura de que deseas eliminar este producto?')) {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', firestoreAppId, 'public', 'data', 'products', id));
+                } catch (err) { alert("Error al eliminar: " + err.message); }
+            }
+        };
+
+        // Compresión y Subida
+        const compressImage = (file) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width, height = img.height;
+                        const MAX = 800;
+                        if (width > height && width > MAX) { height *= MAX / width; width = MAX; } 
+                        else if (height > MAX) { width *= MAX / height; height = MAX; }
+                        canvas.width = width; canvas.height = height;
+                        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.7));
+                    };
+                    img.onerror = reject;
+                };
+                reader.onerror = reject;
+            });
+        };
+
+        window.handleImageUpload = async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const btnLabel = document.getElementById('upload-btn-label');
+            const preview = document.getElementById('image-preview-container');
+            document.getElementById('file-upload').disabled = true;
+
+            try {
+                btnLabel.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin text-blue-600"></i> Comprimiendo...';
+                lucide.createIcons();
+                
+                const compressedBase64 = await compressImage(file);
+                
+                btnLabel.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin text-blue-600"></i> Subiendo...';
+                lucide.createIcons();
+
+                const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, '');
+                const fileName = `productos/${Date.now()}_${cleanName}.jpg`;
+                const storageRef = ref(storage, fileName);
+                
+                await uploadString(storageRef, compressedBase64, 'data_url');
+                const url = await getDownloadURL(storageRef);
+
+                document.getElementById('form-image').value = url;
+                preview.innerHTML = `<img src="${url}" class="w-full h-full object-contain" />`;
+                preview.classList.remove('hidden');
+
+                btnLabel.innerHTML = '<i data-lucide="upload-cloud" class="w-5 h-5 text-blue-600"></i> Imagen Subida';
+                lucide.createIcons();
+            } catch (err) {
+                alert("Error al subir imagen: " + err.message);
+                btnLabel.innerHTML = '<i data-lucide="upload-cloud" class="w-5 h-5 text-blue-600"></i> Reintentar subida';
+                lucide.createIcons();
+            } finally {
+                document.getElementById('file-upload').disabled = false;
+            }
+        };
+
+        // Iniciar
+        initData();
+
+    </script>
+</body>
+</html>
