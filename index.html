@@ -12,28 +12,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     
-    <!-- PWA Manifest Dinámico (Mejorado para mayor compatibilidad) -->
-    <link rel="manifest" id="dynamic-manifest">
-    <script>
-        const manifestJSON = {
-            "name": "Catálogo Aida Alvarez",
-            "short_name": "Catálogo",
-            "start_url": "./index.html",
-            "display": "standalone",
-            "background_color": "#f8fafc",
-            "theme_color": "#2563eb",
-            "icons": [{
-                "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzI1NjNlYiIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yIDEyczMtNyAxMC03IDEwIDcgMTAgNy0zIDctMTAgNy0xMC03LTEwLTd6Ii8+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMyIvPjwvc3ZnPg==",
-                "sizes": "512x512",
-                "type": "image/svg+xml",
-                "purpose": "any maskable"
-            }]
-        };
-        const manifestBlob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/json'});
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('dynamic-manifest').href = URL.createObjectURL(manifestBlob);
-        });
-    </script>
+    <!-- PWA Manifest Físico -->
+    <link rel="manifest" href="./manifest.json">
 
     <style>
         .hide-scrollbar::-webkit-scrollbar { display: none; }
@@ -424,24 +404,14 @@
 
     <!-- LÓGICA DE LA APLICACIÓN (FIREBASE + VANILLA JS + PWA) -->
     <script type="module">
-        // 0. CONFIGURACIÓN PWA (Mejorada para GitHub Pages)
+        // 0. CONFIGURACIÓN PWA
         let deferredPrompt;
         
-        // Un Service Worker básico y robusto
-        const swCode = `
-            const CACHE_NAME = 'catalogo-v1';
-            self.addEventListener('install', (e) => {
-                e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(['./'])));
-                self.skipWaiting();
-            });
-            self.addEventListener('activate', (e) => self.clients.claim());
-            self.addEventListener('fetch', (e) => {
-                e.respondWith(caches.match(e.request).then((res) => res || fetch(e.request)));
-            });
-        `;
-        const swBlob = new Blob([swCode], {type: 'application/javascript'});
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(err => console.log('SW fallback error', err));
+        // Verifica si soporta serviceWorker y si está corriendo sobre HTTP/HTTPS para evitar errores en local
+        if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+            navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('SW registrado', reg))
+            .catch(err => console.error('SW error', err));
         }
 
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -503,9 +473,9 @@
             { id: "22", brand: 'Spectrum', name: 'Xtensa Premium Asférico', category: 'Esféricos', price: '$ 74.500', material: 'Hioxifilcon A (57% H2O)', replace: 'Mensual', box: 'Caja x 6', params: 'Aquagrip | CB: 8.60', image: 'https://placehold.co/400x300/fffbeb/b45309?text=Xtensa+Asferico' }
         ];
 
-        // --- FUNCIONES DEL CARRITO ---
+        // --- FUNCIONES DEL CARRITO MEJORADO CON CANTIDADES ---
         window.updateCartBadge = () => {
-            const count = cart.length;
+            const count = cart.reduce((sum, item) => sum + item.quantity, 0); 
             const bDesktop = document.getElementById('cart-badge-desktop');
             const bMobile = document.getElementById('cart-badge-mobile');
             
@@ -517,22 +487,45 @@
                 bMobile.classList.add('hidden');
             }
             document.getElementById('cart-total-items').innerText = `${count} ${count === 1 ? 'producto' : 'productos'}`;
-            localStorage.setItem('catalogo_cart', JSON.stringify(cart)); // Guardar progreso
+            localStorage.setItem('catalogo_cart', JSON.stringify(cart)); 
         };
 
         window.addToCart = (id) => {
             const product = products.find(p => p.id === id);
             if(product) {
-                // Generamos un ID único para la entrada en el carrito por si pide varios iguales
-                cart.push({ ...product, cartId: Date.now().toString() });
+                const existingItem = cart.find(item => item.id === id);
+                if(existingItem) {
+                    existingItem.quantity += 1;
+                } else {
+                    cart.push({ ...product, quantity: 1 });
+                }
                 window.updateCartBadge();
-                alert(`¡${product.name} agregado al pedido!`);
+                renderCatalog(); 
+                if(!document.getElementById('view-carrito').classList.contains('hidden')){
+                    renderCart();
+                }
             }
         };
 
-        window.removeFromCart = (cartId) => {
-            cart = cart.filter(item => item.cartId !== cartId);
+        window.updateQuantity = (id, delta) => {
+            const index = cart.findIndex(item => item.id === id);
+            if(index !== -1) {
+                cart[index].quantity += delta;
+                if(cart[index].quantity <= 0) {
+                    cart.splice(index, 1); 
+                }
+                window.updateCartBadge();
+                renderCatalog(); 
+                if(!document.getElementById('view-carrito').classList.contains('hidden')){
+                    renderCart(); 
+                }
+            }
+        };
+
+        window.removeFromCart = (id) => {
+            cart = cart.filter(item => item.id !== id);
             window.updateCartBadge();
+            renderCatalog();
             renderCart();
         };
 
@@ -554,15 +547,24 @@
 
             container.innerHTML = cart.map(item => `
                 <div class="flex items-center gap-4 p-4 border border-slate-100 rounded-2xl bg-slate-50 relative group">
-                    <img src="${item.image || 'https://placehold.co/100x100/e2e8f0/94a3b8?text=Foto'}" class="w-16 h-16 object-contain rounded-xl border border-slate-200 bg-white bg-white shrink-0">
+                    <img src="${item.image || 'https://placehold.co/100x100/e2e8f0/94a3b8?text=Foto'}" class="w-16 h-16 object-contain rounded-xl border border-slate-200 bg-white shrink-0">
                     <div class="flex-1">
                         <span class="text-xs font-bold text-blue-600">${item.brand}</span>
                         <h4 class="font-bold text-slate-900 leading-tight">${item.name}</h4>
                         <p class="text-sm font-bold text-slate-700">${item.price}</p>
+                        
+                        <!-- Control de cantidades -->
+                        <div class="flex items-center justify-between mt-3">
+                            <div class="flex items-center gap-3 bg-white border border-slate-200 rounded-lg p-1">
+                                <button onclick="updateQuantity('${item.id}', -1)" class="w-8 h-8 flex items-center justify-center bg-slate-50 text-slate-600 rounded-md font-bold shadow-sm hover:text-blue-600 transition-colors">-</button>
+                                <span class="font-bold text-slate-800 w-4 text-center">${item.quantity}</span>
+                                <button onclick="updateQuantity('${item.id}', 1)" class="w-8 h-8 flex items-center justify-center bg-slate-50 text-slate-600 rounded-md font-bold shadow-sm hover:text-blue-600 transition-colors">+</button>
+                            </div>
+                            <button onclick="removeFromCart('${item.id}')" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors" title="Eliminar del pedido">
+                                <i data-lucide="trash-2" class="w-5 h-5"></i>
+                            </button>
+                        </div>
                     </div>
-                    <button onclick="removeFromCart('${item.cartId}')" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors" title="Eliminar del pedido">
-                        <i data-lucide="trash-2" class="w-5 h-5"></i>
-                    </button>
                 </div>
             `).join('');
             
@@ -580,33 +582,40 @@
             
             if(cart.length === 0) return alert("Tu carrito está vacío.");
 
-            // Crear el mensaje para WhatsApp
-            let msj = `*NUEVO PEDIDO - CATÁLOGO AIDA*\n\n`;
-            msj += `👤 *Nombre:* ${nombre}\n`;
-            msj += `🏢 *Óptica:* ${optica}\n`;
-            msj += `📞 *Teléfono:* ${telefono}\n\n`;
-            msj += `*🛒 PRODUCTOS SOLICITADOS:*\n`;
-            
-            cart.forEach((item, i) => {
-                msj += `\n${i+1}. *${item.brand}* - ${item.name}\n`;
-                msj += `   Precio ref: ${item.price}\n`;
-                if(item.box) msj += `   Presentación: ${item.box}\n`;
-            });
-            
-            msj += `\n*Nota:* Por favor confirmar la receta y el envío con este cliente.`;
+            // Formateo limpio y minimalista solicitado para el mensaje de WhatsApp
+            let msj = `*NUEVO PEDIDO*\n\n`;
+            msj += `👤 Cliente: ${nombre} (${optica})\n`;
+            msj += `📞 Tel: ${telefono}\n\n`;
+            msj += `*🛒 PRODUCTOS:*\n`;
 
-            // El número que nos diste: 3164326679 (Añadimos 57 de Colombia)
+            let granTotal = 0;
+
+            cart.forEach((item) => {
+                // Convertir el precio en texto a un número para poder sumarlo
+                let priceNum = parseInt(item.price.replace(/[^0-9]/g, ''));
+                if(isNaN(priceNum)) priceNum = 0;
+
+                let subtotalItem = priceNum * item.quantity;
+                granTotal += subtotalItem;
+
+                msj += `• ${item.quantity}x ${item.name} - ${item.price}\n`;
+            });
+
+            // Formatear el total con el signo peso y punto de miles (estilo Colombia)
+            let totalFormatted = "$ " + granTotal.toLocaleString('es-CO');
+
+            msj += `\n*💰 VALOR TOTAL: ${totalFormatted}*`;
+
             const whatsappUrl = `https://wa.me/573164326679?text=${encodeURIComponent(msj)}`;
             
-            // Abrir WhatsApp
             window.open(whatsappUrl, '_blank');
 
-            // Limpiar todo después de enviar
             cart = [];
             window.updateCartBadge();
             window.closeCheckoutModal();
             document.getElementById('form-checkout').reset();
             window.switchTab('catalogo');
+            renderCatalog(); 
         });
 
 
@@ -641,8 +650,23 @@
             emptyEl.classList.add('hidden');
             grid.classList.remove('hidden');
 
-            grid.innerHTML = filtered.map(product => `
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full">
+            grid.innerHTML = filtered.map(product => {
+                const cartItem = cart.find(c => c.id === product.id);
+                
+                const actionButtonHtml = cartItem ? `
+                    <div class="flex items-center justify-between bg-emerald-50 rounded-xl p-1 mt-auto border border-emerald-100">
+                        <button onclick="updateQuantity('${product.id}', -1)" class="w-10 h-10 flex items-center justify-center bg-white text-emerald-600 rounded-lg font-bold shadow-sm hover:bg-emerald-100 transition-colors">-</button>
+                        <span class="font-bold text-emerald-700 px-2 text-sm">${cartItem.quantity} en pedido</span>
+                        <button onclick="updateQuantity('${product.id}', 1)" class="w-10 h-10 flex items-center justify-center bg-emerald-500 text-white rounded-lg font-bold shadow-sm hover:bg-emerald-600 transition-colors">+</button>
+                    </div>
+                ` : `
+                    <button onclick="addToCart('${product.id}')" class="w-full bg-blue-50 text-blue-700 py-2.5 rounded-xl font-bold hover:bg-blue-600 hover:text-white transition-colors flex justify-center items-center gap-2 mt-auto">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i> Agregar
+                    </button>
+                `;
+
+                return `
+                <div class="bg-white rounded-2xl p-5 shadow-sm border ${cartItem ? 'border-emerald-300 shadow-md' : 'border-slate-100'} hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full">
                     <div>
                         <div class="flex justify-between items-start mb-4">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700">${product.brand}</span>
@@ -662,12 +686,9 @@
                             ${product.params ? `<div class="flex items-start gap-2"><i data-lucide="info" class="w-4 h-4 text-slate-400 mt-0.5 shrink-0"></i><span class="text-xs font-medium text-slate-500 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">${product.params}</span></div>` : ''}
                         </div>
                     </div>
-                    <!-- Botón de carrito añadido al final de la tarjeta -->
-                    <button onclick="addToCart('${product.id}')" class="w-full bg-blue-50 text-blue-700 py-2.5 rounded-xl font-bold hover:bg-blue-600 hover:text-white transition-colors flex justify-center items-center gap-2 mt-auto">
-                        <i data-lucide="plus-circle" class="w-5 h-5"></i> Agregar
-                    </button>
+                    ${actionButtonHtml}
                 </div>
-            `).join('');
+            `}).join('');
 
             lucide.createIcons();
             renderFilters();
@@ -717,10 +738,8 @@
 
         // 5. LÓGICA DE FIREBASE (CACHÉ + SNAPSHOT)
         function initData() {
-            // Actualizar el número del carrito apenas abre la web
             window.updateCartBadge();
 
-            // A) Carga desde Caché
             const cachedData = localStorage.getItem('catalogo_aida_cache');
             if (cachedData) {
                 try {
@@ -731,7 +750,6 @@
                 } catch (e) { console.error("Error leyendo caché:", e); }
             }
 
-            // B) Sincronización Real con Firebase
             const productsRef = collection(db, 'artifacts', firestoreAppId, 'public', 'data', 'products');
             onSnapshot(productsRef, (snapshot) => {
                 if (snapshot.empty && !window.__hasSeeded) {
@@ -787,7 +805,6 @@
 
         // 7. EVENTOS GLOBALES (Mapeados a Window para HTML)
         
-        // Pestañas
         window.switchTab = (tabName) => {
             ['catalogo', 'politicas', 'gestion', 'carrito'].forEach(id => {
                 const el = document.getElementById(`view-${id}`);
@@ -797,7 +814,6 @@
                 }
             });
 
-            // Reseteo de estilos en Desktop
             ['tab-catalogo', 'tab-politicas', 'tab-carrito'].forEach(id => {
                 const el = document.getElementById(id);
                 if(el){
@@ -811,7 +827,6 @@
                 gBtn.classList.add('border-transparent', 'text-slate-500');
             }
 
-            // Aplicar estilo activo
             if(tabName === 'catalogo') {
                 document.getElementById('tab-catalogo').classList.remove('border-transparent', 'text-slate-500');
                 document.getElementById('tab-catalogo').classList.add('border-blue-600', 'text-blue-600');
@@ -828,7 +843,6 @@
                 renderAdminTable();
             }
 
-            // Mobile menu styling
             ['mob-tab-catalogo', 'mob-tab-politicas', 'mob-tab-gestion', 'mob-tab-carrito'].forEach(id => {
                 const el = document.getElementById(id);
                 if(el) {
@@ -848,7 +862,6 @@
         window.openLoginModal = () => document.getElementById('modal-login').classList.remove('hidden');
         window.closeLoginModal = () => document.getElementById('modal-login').classList.add('hidden');
         
-        // Filtros
         window.setBrandFilter = (brand) => {
             currentBrand = brand;
             renderCatalog();
@@ -859,7 +872,6 @@
             renderCatalog();
         });
 
-        // Login
         document.getElementById('form-login').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('login-email').value;
@@ -884,7 +896,6 @@
             window.switchTab('catalogo');
         };
 
-        // Exportar a PDF (Público)
         window.exportToPDF = () => {
             if (products.length === 0) {
                 alert("No hay productos para exportar.");
@@ -925,7 +936,6 @@
             doc.save("Catalogo_Aida_Alvarez.pdf");
         };
 
-        // Panel Admin
         window.openFormModal = (id = null) => {
             document.getElementById('admin-form').reset();
             const preview = document.getElementById('image-preview-container');
@@ -995,7 +1005,6 @@
             }
         };
 
-        // Compresión y Subida Directa a Firestore
         const compressImage = (file) => {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
