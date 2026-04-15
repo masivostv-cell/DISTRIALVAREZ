@@ -92,6 +92,7 @@
             <button onclick="switchTab('catalogo')" id="mob-tab-catalogo" class="block w-full text-left px-4 py-3 rounded-lg font-medium bg-blue-50 text-blue-600">Catálogo de Productos</button>
             <button onclick="switchTab('carrito')" id="mob-tab-carrito" class="block w-full text-left px-4 py-3 rounded-lg font-medium text-slate-600">Mi Pedido (Carrito)</button>
             <button onclick="switchTab('politicas')" id="mob-tab-politicas" class="block w-full text-left px-4 py-3 rounded-lg font-medium text-slate-600">Políticas de Cambio</button>
+            
             <div id="mobile-admin-section" class="hidden border-t border-slate-100 mt-2 pt-2">
                 <button onclick="switchTab('gestion')" id="mob-tab-gestion" class="block w-full text-left px-4 py-3 rounded-lg font-medium text-slate-600">Gestión de Inventario</button>
                 <button onclick="handleLogout()" class="block w-full text-left px-4 py-3 rounded-lg font-medium text-red-500">Cerrar Sesión Admin</button>
@@ -111,19 +112,21 @@
             <form id="form-login" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Correo Electrónico</label>
-                    <input type="email" id="login-email" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50">
+                    <input type="email" id="login-email" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50" placeholder="tu_correo@ejemplo.com">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Contraseña</label>
-                    <input type="password" id="login-password" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50">
+                    <input type="password" id="login-password" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50" placeholder="••••••••">
                 </div>
                 <p id="login-error" class="hidden text-red-500 text-sm font-medium bg-red-50 p-2 rounded-lg border border-red-100"></p>
-                <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-colors mt-2">Entrar al Panel</button>
+                <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-colors mt-2">
+                    Entrar al Panel
+                </button>
             </form>
         </div>
     </div>
 
-    <!-- MODAL DETALLE DEL PRODUCTO (NUEVO) -->
+    <!-- MODAL DETALLE DEL PRODUCTO -->
     <div id="modal-details" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
         <div class="bg-white rounded-3xl w-full max-w-3xl shadow-2xl my-8 fade-in overflow-hidden flex flex-col md:flex-row">
             <div class="md:w-2/5 bg-slate-50 p-8 flex items-center justify-center border-b md:border-b-0 md:border-r border-slate-100">
@@ -146,7 +149,6 @@
                     <div id="div-det-box" class="flex gap-3 hidden"><i data-lucide="package" class="w-5 h-5 text-slate-400"></i><span id="details-box"></span></div>
                     <div id="div-det-params" class="flex gap-3 hidden"><i data-lucide="info" class="w-5 h-5 text-slate-400"></i><span id="details-params"></span></div>
                     
-                    <!-- Nuevos campos -->
                     <div id="div-det-esfera" class="flex gap-3 hidden pt-2 border-t border-slate-200 mt-2"><i data-lucide="circle-dashed" class="w-5 h-5 text-indigo-400"></i><span><b>Esfera:</b> <span id="details-esfera"></span></span></div>
                     <div id="div-det-cilindro" class="flex gap-3 hidden"><i data-lucide="cylinder" class="w-5 h-5 text-indigo-400"></i><span><b>Cilindro:</b> <span id="details-cilindro"></span></span></div>
                     <div id="div-det-eje" class="flex gap-3 hidden"><i data-lucide="navigation" class="w-5 h-5 text-indigo-400"></i><span><b>Eje:</b> <span id="details-eje"></span></span></div>
@@ -161,7 +163,7 @@
         </div>
     </div>
 
-    <!-- MODAL AGREGAR AL CARRITO CON FÓRMULA (NUEVO) -->
+    <!-- MODAL AGREGAR AL CARRITO CON FÓRMULA -->
     <div id="modal-add-cart" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl fade-in">
             <div class="flex justify-between items-start mb-4">
@@ -192,7 +194,7 @@
         </div>
     </div>
 
-    <!-- MODAL CHECKOUT (WHATSAPP FORM SIN FÓRMULA GLOBAL) -->
+    <!-- MODAL CHECKOUT (WHATSAPP FORM) -->
     <div id="modal-checkout" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-3xl p-6 md:p-8 w-full max-w-md shadow-2xl fade-in overflow-y-auto max-h-[90vh]">
             <div class="flex justify-between items-center mb-6">
@@ -226,7 +228,7 @@
         </div>
     </div>
 
-    <!-- MODAL DEL FORMULARIO DE PRODUCTOS (ADMIN ACTUALIZADO CON 3 CAMPOS NUEVOS) -->
+    <!-- MODAL DEL FORMULARIO DE PRODUCTOS (ADMIN) -->
     <div id="modal-form" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
         <div class="bg-white rounded-3xl p-6 md:p-8 w-full max-w-3xl shadow-2xl my-8 fade-in">
             <div class="flex justify-between items-center mb-6">
@@ -258,7 +260,7 @@
                     <input type="text" id="form-replace" class="w-full px-3 py-2 border border-slate-200 rounded-lg">
                 </div>
                 
-                <!-- NUEVOS CAMPOS TÉCNICOS -->
+                <!-- CAMPOS TÉCNICOS -->
                 <div class="md:col-span-3 border-t border-b border-slate-100 py-3 my-2 bg-indigo-50/30 px-3 rounded-xl grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="space-y-1">
                         <label class="text-sm font-bold text-indigo-700">Rango Esfera</label>
@@ -336,9 +338,14 @@
                         <i data-lucide="filter" class="w-5 h-5 text-slate-400 hidden sm:block shrink-0"></i>
                         <div id="filter-brands" class="flex gap-2"></div>
                     </div>
-                    <button onclick="exportToPDF()" class="bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto">
-                        <i data-lucide="download" class="w-5 h-5"></i> PDF
-                    </button>
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <button onclick="clearCacheAndReload()" id="btn-actualizar" class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shrink-0 flex-1 sm:flex-none">
+                            <i data-lucide="refresh-cw" class="w-5 h-5"></i> Actualizar
+                        </button>
+                        <button onclick="exportToPDF()" class="bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shrink-0 flex-1 sm:flex-none">
+                            <i data-lucide="download" class="w-5 h-5"></i> PDF
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -477,9 +484,21 @@
         let currentAddingProductId = null;
 
         const floatingInstallBtn = document.getElementById('floating-install-btn');
-        if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-            navigator.serviceWorker.register('./sw.js').catch(()=>{});
+        
+        // CORRECCIÓN: Manejo de SW más estricto para evitar errores en Canvas
+        if ('serviceWorker' in navigator) {
+            try {
+                if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+                    const isSupportedDomain = window.location.hostname !== '' && !window.location.hostname.includes('usercontent');
+                    if(isSupportedDomain) {
+                        navigator.serviceWorker.register('./sw.js').catch(() => {});
+                    }
+                }
+            } catch (error) {
+                // Ignorar error de SW en entorno seguro
+            }
         }
+
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault(); deferredPrompt = e; floatingInstallBtn.classList.remove('hidden');
         });
@@ -508,11 +527,33 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        
-        // ¡Línea restaurada!
         const firestoreAppId = firebaseConfig.projectId;
         
         lucide.createIcons();
+
+        // Limpiar caché y recargar forzosamente
+        window.clearCacheAndReload = () => {
+            const btn = document.getElementById('btn-actualizar');
+            if(btn) {
+                btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Cargando...';
+                lucide.createIcons();
+            }
+            
+            // Borrar datos cacheados
+            localStorage.removeItem('catalogo_aida_cache');
+            
+            // Borrar caché del PWA/ServiceWorker
+            if ('caches' in window) {
+                caches.keys().then((names) => {
+                    names.forEach(name => caches.delete(name));
+                });
+            }
+            
+            // Recargar la página limpia
+            setTimeout(() => {
+                window.location.reload(true);
+            }, 500);
+        };
 
         // 2. FÓRMULA Y CARRITO
         window.updateCartBadge = () => {
