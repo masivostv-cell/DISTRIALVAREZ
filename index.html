@@ -342,8 +342,9 @@
                         <button onclick="clearCacheAndReload()" id="btn-actualizar" class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shrink-0 flex-1 sm:flex-none">
                             <i data-lucide="refresh-cw" class="w-5 h-5"></i> Actualizar
                         </button>
-                        <button onclick="exportToPDF()" class="bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shrink-0 flex-1 sm:flex-none">
-                            <i data-lucide="download" class="w-5 h-5"></i> PDF
+                        <!-- NUEVO BOTÓN DE EXPORTAR PDF -->
+                        <button onclick="generarCatalogoPDF()" id="btnExportPDF" class="bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shrink-0 flex-1 sm:flex-none shadow-md">
+                            <i data-lucide="book-open" class="w-5 h-5"></i> Catálogo PDF
                         </button>
                     </div>
                 </div>
@@ -808,17 +809,161 @@
             renderAdminTable();
         });
 
-        window.exportToPDF = () => {
-            if (products.length === 0) return alert("No hay productos.");
-            const { jsPDF } = window.jspdf; const doc = new jsPDF('landscape'); 
-            doc.setFontSize(18); doc.text("Catálogo - Aida Alvarez", 14, 22);
-            doc.setFontSize(11); doc.setTextColor(100); doc.text("Distribuidora", 14, 30);
+        // NUEVA FUNCIÓN: EXPORTAR CATÁLOGO VISUAL ESTILO REVISTA A PDF
+        window.generarCatalogoPDF = async () => {
+            if (!products || products.length === 0) {
+                alert("⚠️ No hay productos disponibles para generar el catálogo.");
+                return;
+            }
 
-            const data = [...products].sort((a, b) => (a.brand || '').localeCompare(b.brand || '')).map(p => [
-                p.brand || "", p.name || "", p.category || "", p.price || "", p.material || "", (p.box || ""), p.esfera || "", p.cilindro || "", p.eje || ""
-            ]);
-            doc.autoTable({ startY: 35, head: [["Marca", "Producto", "Categoría", "Precio", "Material", "Caja", "Esfera", "Cilindro", "Eje"]], body: data, theme: 'striped', headStyles: { fillColor: [37, 99, 235] }, styles: { fontSize: 8 }});
-            doc.save("Catalogo.pdf");
+            // Animar el botón de carga
+            const btn = document.getElementById('btnExportPDF');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Generando...';
+            btn.disabled = true;
+            lucide.createIcons();
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            let yOffset = 25; 
+            let itemsOnPage = 0;
+            let pageNum = 1;
+
+            // Diseño del encabezado y pie de página (Azul corporativo)
+            const drawHeaderFooter = (pageNo) => {
+                doc.setFillColor(37, 99, 235); // bg-blue-600
+                doc.rect(0, 0, 210, 18, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(14);
+                doc.setFont("helvetica", "bold");
+                doc.text("CATÁLOGO SALUD VISUAL - AIDA MABEL ALVAREZ", 105, 12, { align: "center" });
+                
+                doc.setTextColor(150);
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "normal");
+                doc.text(`Página ${pageNo}`, 105, 290, { align: "center" });
+            };
+
+            // Convertidor de Imagen (Para evitar problemas CORS al incrustar el PDF)
+            const getBase64ImageFromUrl = async (imageUrl) => {
+                return new Promise((resolve) => {
+                    let img = new Image();
+                    img.crossOrigin = "Anonymous"; 
+                    img.onload = () => {
+                        let canvas = document.createElement("canvas");
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        let ctx = canvas.getContext("2d");
+                        ctx.drawImage(img, 0, 0);
+                        resolve(canvas.toDataURL("image/jpeg"));
+                    };
+                    img.onerror = () => resolve(null);
+                    img.src = imageUrl;
+                });
+            };
+
+            drawHeaderFooter(pageNum);
+
+            for (let i = 0; i < products.length; i++) {
+                const p = products[i];
+
+                if (itemsOnPage === 2) {
+                    doc.addPage();
+                    pageNum++;
+                    drawHeaderFooter(pageNum);
+                    yOffset = 25;
+                    itemsOnPage = 0;
+                }
+
+                // Caja de fondo del Producto
+                doc.setFillColor(248, 250, 252); // Fondo slate-50
+                doc.setDrawColor(37, 99, 235); // Borde blue-600
+                doc.setLineWidth(0.5);
+                doc.roundedRect(10, yOffset, 190, 120, 5, 5, 'FD'); 
+                
+                // Espacio Imagen (Izquierda)
+                doc.setFillColor(255, 255, 255);
+                doc.roundedRect(15, yOffset + 10, 85, 100, 3, 3, 'FD');
+                
+                if (p.image) {
+                    const base64Img = await getBase64ImageFromUrl(p.image);
+                    if (base64Img) {
+                        doc.addImage(base64Img, 'JPEG', 17, yOffset + 12, 81, 96);
+                    } else {
+                        doc.setTextColor(200);
+                        doc.setFontSize(40);
+                        doc.text("📷", 57, yOffset + 60, { align: "center" });
+                    }
+                } else {
+                    doc.setTextColor(200);
+                    doc.setFontSize(40);
+                    doc.text("📷", 57, yOffset + 60, { align: "center" });
+                }
+                
+                // --- Detalles y Especificaciones (Derecha) ---
+                
+                // Marca y Categoría
+                doc.setTextColor(13, 148, 136); // teal-600
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "bold");
+                doc.text(`${(p.brand || '').toUpperCase()} | ${(p.category || '').toUpperCase()}`, 110, yOffset + 18);
+
+                // Título
+                doc.setTextColor(15, 23, 42); // slate-900
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(18);
+                let splitTitle = doc.splitTextToSize((p.name || '').toUpperCase(), 85);
+                doc.text(splitTitle, 110, yOffset + 27);
+
+                // Línea separadora sutil
+                let titleLines = splitTitle.length;
+                let lineY = yOffset + 30 + ((titleLines - 1) * 8);
+                doc.setDrawColor(226, 232, 240); // slate-200
+                doc.line(110, lineY, 190, lineY);
+
+                // Especificaciones Técnicas (Importante para óptica)
+                doc.setTextColor(71, 85, 105); // slate-600
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(10);
+                
+                let specs = [];
+                if (p.material) specs.push(`• Material: ${p.material}`);
+                if (p.box) specs.push(`• Presentación: ${p.box} ${p.replace ? '('+p.replace+')' : ''}`);
+                if (p.params) specs.push(`• Parámetros: ${p.params}`);
+                
+                let rangos = [];
+                if (p.esfera) rangos.push(`Esf: ${p.esfera}`);
+                if (p.cilindro) rangos.push(`Cil: ${p.cilindro}`);
+                if (p.eje) rangos.push(`Eje: ${p.eje}`);
+                if (rangos.length > 0) specs.push(`• Rangos: ${rangos.join(' | ')}`);
+
+                if (specs.length === 0) specs.push("Consulta con el especialista para más detalles.");
+
+                let descY = lineY + 7;
+                specs.forEach(spec => {
+                    let splitSpec = doc.splitTextToSize(spec, 85);
+                    doc.text(splitSpec, 110, descY);
+                    descY += 5 * splitSpec.length; // Espaciado entre líneas
+                });
+
+                // Precio
+                doc.setTextColor(37, 99, 235); // blue-600
+                doc.setFontSize(24);
+                doc.setFont("helvetica", "bold");
+                doc.text(`${p.price || ''}`, 110, yOffset + 110);
+
+                yOffset += 130; 
+                itemsOnPage++;
+            }
+
+            // Descargar PDF
+            doc.save(`Catalogo_Aida_Alvarez_${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`);
+            
+            // Restaurar botón a su estado original
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            lucide.createIcons();
         };
 
         window.openFormModal = (id = null) => {
